@@ -13,6 +13,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import com.github.mikephil.charting.charts.BarChart;
 import com.github.mikephil.charting.charts.LineChart;
@@ -24,11 +25,14 @@ import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
 import com.github.mikephil.charting.utils.ValueFormatter;
 import com.hookedonplay.decoviewlib.DecoView;
+import com.hookedonplay.decoviewlib.charts.DecoDrawEffect;
 import com.hookedonplay.decoviewlib.charts.SeriesItem;
 import com.hookedonplay.decoviewlib.events.DecoEvent;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
 import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
+
+import org.w3c.dom.Text;
 
 import java.util.ArrayList;
 
@@ -40,6 +44,8 @@ public class MainActivity extends AppCompatActivity {
     @Bind(R.id.toolbar) Toolbar toolbar;
     @Bind(R.id.dynamicArcView) DecoView arcView;
     @Bind(R.id.chart) BarChart mChart;
+    @Bind(R.id.pm_num) TextView pm_num_view;
+    @Bind(R.id.healthy_status) TextView healthy_view;
 
     private Typeface mTf;
 
@@ -64,28 +70,51 @@ public class MainActivity extends AppCompatActivity {
 
     private void initArcView() {
         // Create background track
-        arcView.addSeries(new SeriesItem.Builder(Color.argb(255, 218, 218, 218))
-                .setRange(0, 100, 100)
-                .setInitialVisibility(false)
-                .setLineWidth(32f)
-                .build());
+        SeriesItem seriesItem = new SeriesItem.Builder(Color.argb(255, 218, 218, 218))
+                .setRange(0, 100, 0)
+                .setInitialVisibility(true)
+                .setLineWidth(24f)
+                .build();
 
         //Create data series track
         SeriesItem seriesItem1 = new SeriesItem.Builder(Color.argb(255, 64, 196, 0))
                 .setRange(0, 100, 0)
-                .setLineWidth(32f)
+                .setInitialVisibility(false)
+                .setLineWidth(24f)
                 .build();
 
+        seriesItem1.addArcSeriesItemListener(new SeriesItem.SeriesItemListener() {
+            @Override
+            public void onSeriesItemAnimationProgress(float v, float v1) {
+                pm_num_view.setText("" + (int)v1 + "微克");
+                healthy_view.setText("约等于" + (int)(v1 / 10) + "支烟");
+            }
+
+            @Override
+            public void onSeriesItemDisplayProgress(float v) {
+
+            }
+        });
+
+        int seriesIndex = arcView.addSeries(seriesItem);
         int series1Index = arcView.addSeries(seriesItem1);
 
-        arcView.addEvent(new DecoEvent.Builder(DecoEvent.EventType.EVENT_SHOW, true)
-                .setDelay(1000)
-                .setDuration(2000)
+        arcView.addEvent(new DecoEvent.Builder(100)
+                .setIndex(seriesIndex)
+                .setDuration(3000)
+                .setDelay(100)
                 .build());
 
-        arcView.addEvent(new DecoEvent.Builder(25).setIndex(series1Index).setDelay(4000).build());
-        arcView.addEvent(new DecoEvent.Builder(100).setIndex(series1Index).setDelay(8000).build());
-        arcView.addEvent(new DecoEvent.Builder(10).setIndex(series1Index).setDelay(12000).build());
+        arcView.addEvent(new DecoEvent.Builder(DecoDrawEffect.EffectType.EFFECT_SPIRAL_OUT)
+                .setIndex(series1Index)
+                .setDuration(2000)
+                .setDelay(1250)
+                .build());
+
+        arcView.addEvent(new DecoEvent.Builder(25)
+                .setIndex(series1Index)
+                .setDelay(3250)
+                .build());
     }
 
     private void initChart() {

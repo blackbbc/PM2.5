@@ -47,7 +47,7 @@
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:textColor="@android:color/white"
-                        android:textSize="30sp"
+                        android:textSize="48sp"
                         android:text="150微克"
                         android:layout_centerVertical="true"
                         android:layout_centerHorizontal="true" />
@@ -59,18 +59,21 @@
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:textColor="@android:color/white"
                         android:text="约等于2支烟"
-                        android:layout_marginTop="140dp"
+                        android:layout_marginTop="160dp"
                         android:layout_centerHorizontal="true"/>
                 </RelativeLayout>
 
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="0px"
-                    android:layout_weight="1">
+                    android:layout_weight="1"
+                    android:paddingTop="10dp">
+
                     <com.github.mikephil.charting.charts.BarChart
                         android:id="@+id/chart"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent" />
+
                 </LinearLayout>
 
             </LinearLayout>

@@ -43,7 +43,7 @@ public class GooeyMenu extends View {
     private ArrayList<ObjectAnimator> mShowAnimation = new ArrayList<>();
     private ArrayList<ObjectAnimator> mHideAnimation = new ArrayList<>();
     private ValueAnimator mBezierAnimation, mBezierEndAnimation;
-    private boolean isMenuVisible = true;
+    private boolean isMenuVisible = false;
     private Float bezierConstant = BEZIER_CONSTANT;
     private ValueAnimator mRotationAnimation,mRotationReverseAnimation, mCircleAnimation, mCircleReverseAnimation;
     private GooeyMenuInterface mGooeyMenuInterface;
@@ -60,8 +60,8 @@ public class GooeyMenu extends View {
     private float sCenterY;
     float circleRadius;
 
-    private float sProgress = 1f;
-    private float mProgress = 1f;
+    private float sProgress = 0f;
+    private float mProgress = 0f;
 
     private MyLine line1;
     private MyLine line2;
@@ -307,7 +307,8 @@ public class GooeyMenu extends View {
         mCenterY = h - mFabButtonRadius;
         for (int i = 0; i < mNumberOfMenu; i++) {
             CirclePoint circlePoint = new CirclePoint();
-            circlePoint.setRadius(mGab);
+//            circlePoint.setRadius(mGab);
+            circlePoint.setRadius(0);
             circlePoint.setAngle(Math.PI / 2 + (Math.PI / 2 / (mNumberOfMenu - 1)) * i);
             mMenuPoints.add(circlePoint);
             ObjectAnimator animShow = ObjectAnimator.ofFloat(mMenuPoints.get(i), "Radius", 0f, mGab);
@@ -360,6 +361,7 @@ public class GooeyMenu extends View {
                 canvas.restore();
             }
         }
+
         canvas.save();
         canvas.translate(mCenterX, mCenterY);
         Path path = createPath();
