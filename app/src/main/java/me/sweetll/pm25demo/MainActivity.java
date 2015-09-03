@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
@@ -38,20 +39,16 @@ import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import me.relex.circleindicator.CircleIndicator;
 
 public class MainActivity extends AppCompatActivity {
     @Bind(R.id.drawer_layout) DrawerLayout mDrawer;
     @Bind(R.id.toolbar) Toolbar toolbar;
     @Bind(R.id.dynamicArcView) DecoView arcView;
-    @Bind(R.id.chart) BarChart mChart;
     @Bind(R.id.pm_num) TextView pm_num_view;
     @Bind(R.id.healthy_status) TextView healthy_view;
 
-    private Typeface mTf;
 
-    protected String[] mMonths = new String[] {
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"
-    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,8 +61,14 @@ public class MainActivity extends AppCompatActivity {
         ab.setHomeAsUpIndicator(getResources().getDrawable(R.drawable.ic_menu));
         ab.setDisplayHomeAsUpEnabled(true);
 
+        ViewPager chartViewpager = (ViewPager) findViewById(R.id.viewpager_chart);
+        CircleIndicator chartIndicator = (CircleIndicator) findViewById(R.id.indicator_chart);
+
+        ChartPagerAdapter chartPagerAdapter = new ChartPagerAdapter(getSupportFragmentManager());
+        chartViewpager.setAdapter(chartPagerAdapter);
+        chartIndicator.setViewPager(chartViewpager);
+
         initArcView();
-        initChart();
     }
 
     private void initArcView() {
@@ -117,94 +120,6 @@ public class MainActivity extends AppCompatActivity {
                 .build());
     }
 
-    private void initChart() {
-        mChart.setDrawBarShadow(false);
-        mChart.setDrawValueAboveBar(true);
-
-        mChart.setDescription("");
-
-        // if more than 60 entries are displayed in the chart, no values will be
-        // drawn
-        mChart.setMaxVisibleValueCount(60);
-
-        // scaling can now only be done on x- and y-axis separately
-        mChart.setPinchZoom(false);
-
-        // draw shadows for each bar that show the maximum value
-        // mChart.setDrawBarShadow(true);
-
-        // mChart.setDrawXLabels(false);
-
-        mChart.setDrawGridBackground(false);
-        // mChart.setDrawYLabels(false);
-
-        mTf = Typeface.createFromAsset(getAssets(), "OpenSans-Regular.ttf");
-
-        XAxis xAxis = mChart.getXAxis();
-        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
-        xAxis.setTypeface(mTf);
-        xAxis.setDrawGridLines(false);
-        xAxis.setSpaceBetweenLabels(2);
-
-        ValueFormatter custom = new MyValueFormatter();
-
-        YAxis leftAxis = mChart.getAxisLeft();
-        leftAxis.setTypeface(mTf);
-        leftAxis.setLabelCount(8, false);
-        leftAxis.setValueFormatter(custom);
-        leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
-        leftAxis.setSpaceTop(15f);
-
-        YAxis rightAxis = mChart.getAxisRight();
-        rightAxis.setDrawGridLines(false);
-        rightAxis.setTypeface(mTf);
-        rightAxis.setLabelCount(8, false);
-        rightAxis.setValueFormatter(custom);
-        rightAxis.setSpaceTop(15f);
-
-        Legend l = mChart.getLegend();
-        l.setPosition(Legend.LegendPosition.BELOW_CHART_LEFT);
-        l.setForm(Legend.LegendForm.SQUARE);
-        l.setFormSize(9f);
-        l.setTextSize(11f);
-        l.setXEntrySpace(4f);
-
-        // l.setExtra(ColorTemplate.VORDIPLOM_COLORS, new String[] { "abc",
-        // "def", "ghj", "ikl", "mno" });
-        // l.setCustom(ColorTemplate.VORDIPLOM_COLORS, new String[] { "abc",
-        // "def", "ghj", "ikl", "mno" });
-
-        setData(12, 50);
-    }
-
-    private void setData(int count, float range) {
-
-        ArrayList<String> xVals = new ArrayList<String>();
-        for (int i = 0; i < count; i++) {
-            xVals.add(mMonths[i % 12]);
-        }
-
-        ArrayList<BarEntry> yVals1 = new ArrayList<BarEntry>();
-
-        for (int i = 0; i < count; i++) {
-            float mult = (range + 1);
-            float val = (float) (Math.random() * mult);
-            yVals1.add(new BarEntry(val, i));
-        }
-
-        BarDataSet set1 = new BarDataSet(yVals1, "DataSet");
-        set1.setBarSpacePercent(35f);
-
-        ArrayList<BarDataSet> dataSets = new ArrayList<BarDataSet>();
-        dataSets.add(set1);
-
-        BarData data = new BarData(xVals, dataSets);
-        // data.setValueFormatter(new MyValueFormatter());
-        data.setValueTextSize(10f);
-        data.setValueTypeface(mTf);
-
-        mChart.setData(data);
-    }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

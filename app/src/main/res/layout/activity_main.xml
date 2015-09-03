@@ -63,18 +63,24 @@
                         android:layout_centerHorizontal="true"/>
                 </RelativeLayout>
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="match_parent"
                     android:layout_height="0px"
-                    android:layout_weight="1"
-                    android:paddingTop="10dp">
+                    android:layout_weight="1">
 
-                    <com.github.mikephil.charting.charts.BarChart
-                        android:id="@+id/chart"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
+                        <android.support.v4.view.ViewPager
+                            android:id="@+id/viewpager_chart"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:paddingTop="20dp"/>
 
-                </LinearLayout>
+                        <me.relex.circleindicator.CircleIndicator
+                            android:id="@+id/indicator_chart"
+                            android:layout_width="fill_parent"
+                            android:layout_height="30dp"
+                            app:ci_drawable="@drawable/indicator"/>
+
+                </RelativeLayout>
 
             </LinearLayout>
 
