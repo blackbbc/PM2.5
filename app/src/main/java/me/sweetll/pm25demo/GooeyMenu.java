@@ -18,6 +18,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.AnticipateOvershootInterpolator;
+import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 
 import java.util.ArrayList;
@@ -243,14 +244,14 @@ public class GooeyMenu extends View {
         mRotationReverseAnimation.addUpdateListener(mRotationUpdateListener);
 
         mCircleAnimation = ValueAnimator.ofFloat(0, 1);
-        mCircleAnimation.setDuration(150);
-        mCircleAnimation.setStartDelay(100);
-        mCircleAnimation.setInterpolator(new AccelerateInterpolator());
+        mCircleAnimation.setDuration(200);
+        mCircleAnimation.setStartDelay(150);
+        mCircleAnimation.setInterpolator(new DecelerateInterpolator());
         mCircleAnimation.addUpdateListener(mCircleUpdateListener);
 
         mCircleReverseAnimation = ValueAnimator.ofFloat(1, 0);
         mCircleReverseAnimation.setDuration(200);
-        mCircleReverseAnimation.setStartDelay(150);
+        mCircleReverseAnimation.setStartDelay(50);
         mCircleReverseAnimation.setInterpolator(new AccelerateInterpolator());
         mCircleReverseAnimation.addUpdateListener(mCircleUpdateListener);
 
