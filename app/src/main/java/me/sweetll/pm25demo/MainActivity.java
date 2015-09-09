@@ -3,12 +3,21 @@ package me.sweetll.pm25demo;
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.location.Criteria;
+import android.location.GpsSatellite;
+import android.location.GpsStatus;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -16,6 +25,7 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -39,6 +49,7 @@ import com.hookedonplay.decoviewlib.events.DecoEvent;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
 import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
 import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
+import com.orhanobut.logger.Logger;
 
 import org.w3c.dom.Text;
 
@@ -47,6 +58,7 @@ import java.io.FileOutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.Iterator;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -62,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     @Bind(R.id.gooey_menu) GooeyMenu gooeyMenu;
 
     private ActionBarDrawerToggle actionBarDrawerToggle;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -87,6 +100,7 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         chartIndicator.setViewPager(chartViewpager);
 
         initArcView();
+//        initLocation();
         initGPSService();
     }
 
