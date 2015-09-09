@@ -12,6 +12,7 @@ import android.os.Environment;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -50,6 +51,7 @@ import java.util.Date;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import me.relex.circleindicator.CircleIndicator;
+import me.sweetll.pm25demo.service.GPSService;
 
 public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface {
     @Bind(R.id.drawer_layout) DrawerLayout mDrawer;
@@ -58,6 +60,8 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     @Bind(R.id.pm_num) TextView pm_num_view;
     @Bind(R.id.healthy_status) TextView healthy_view;
     @Bind(R.id.gooey_menu) GooeyMenu gooeyMenu;
+
+    private ActionBarDrawerToggle actionBarDrawerToggle;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,6 +74,9 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         ab.setHomeAsUpIndicator(getResources().getDrawable(R.drawable.ic_menu));
         ab.setDisplayHomeAsUpEnabled(true);
 
+        actionBarDrawerToggle = setupDrawerToggle();
+        mDrawer.setDrawerListener(actionBarDrawerToggle);
+
         gooeyMenu.setOnMenuListener(this);
 
         ViewPager chartViewpager = (ViewPager) findViewById(R.id.viewpager_chart);
@@ -80,6 +87,11 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         chartIndicator.setViewPager(chartViewpager);
 
         initArcView();
+        initGPSService();
+    }
+
+    private ActionBarDrawerToggle setupDrawerToggle() {
+        return new ActionBarDrawerToggle(this, mDrawer, toolbar, R.string.drawer_open,  R.string.drawer_close);
     }
 
     private void initArcView() {
@@ -131,6 +143,11 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
                 .build());
     }
 
+    private void initGPSService() {
+        Intent GPSIntent= new Intent(this, GPSService.class);
+        startService(GPSIntent);
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -144,10 +161,9 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         // Handle action bar item clicks here. The action bar will
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
 
         //noinspection SimplifiableIfStatement
-        switch (id) {
+        switch (item.getItemId()) {
             case R.id.action_map:
                 Intent intent = new Intent(this, MapActivity.class);
                 startActivity(intent);
