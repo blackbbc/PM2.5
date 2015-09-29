@@ -2,12 +2,18 @@ package me.sweetll.pm25demo;
 
 import android.animation.ObjectAnimator;
 import android.animation.PropertyValuesHolder;
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.location.Criteria;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
@@ -59,13 +65,19 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
+import java.util.Timer;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import me.relex.circleindicator.CircleIndicator;
+import me.sweetll.pm25demo.constants.LocationInformation;
+import me.sweetll.pm25demo.movement.SimpleStepDetector;
+import me.sweetll.pm25demo.movement.StepListener;
+import me.sweetll.pm25demo.service.DensityService;
 import me.sweetll.pm25demo.service.GPSService;
+import me.sweetll.pm25demo.util.GlobalGlass;
 
-public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface {
+public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface, SensorEventListener, StepListener{
     @Bind(R.id.drawer_layout) DrawerLayout mDrawer;
     @Bind(R.id.toolbar) Toolbar toolbar;
     @Bind(R.id.dynamicArcView) DecoView arcView;
@@ -75,12 +87,23 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
     private ActionBarDrawerToggle actionBarDrawerToggle;
 
+    //Movement
+    private SimpleStepDetector simpleStepDetector;
+    private SensorManager sensorManager;
+    private Sensor accel;
+
+    private int numSteps;
+    private Timer timer;
+    private long time1;
+
+    private DataReceiver dataReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
+        GlobalGlass.Initialize(this);
 
         setSupportActionBar(toolbar);
         final ActionBar ab = getSupportActionBar();
@@ -100,9 +123,48 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         chartIndicator.setViewPager(chartViewpager);
 
         initArcView();
-//        initLocation();
-        initGPSService();
+        initGPSService(); //室内室外
+        initMovement();   //运动状态
+
+        Intent intent = new Intent(this, DensityService.class);
+        intent.putExtra("city", "上海");
+        startService(intent);
+
+//        LocationInformation information = new LocationInformation();
+//        information.setCity("上海");
+//        Logger.d("" + information.getPm2_5_density());
     }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+        sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
+    }
+
+    @Override
+    public void onPause() {
+        super.onPause();
+        sensorManager.unregisterListener(this);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+        dataReceiver = new DataReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(".MainActivity");
+        registerReceiver(dataReceiver, intentFilter);
+    }
+
+    private class DataReceiver extends BroadcastReceiver {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String density = intent.getStringExtra("density");
+            String outdoor = intent.getStringExtra("outdoor");
+            String status = intent.getStringExtra("status");
+        }
+    }
+
 
     private ActionBarDrawerToggle setupDrawerToggle() {
         return new ActionBarDrawerToggle(this, mDrawer, toolbar, R.string.drawer_open,  R.string.drawer_close);
@@ -162,6 +224,49 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         startService(GPSIntent);
     }
 
+    private void initMovement() {
+        numSteps = 0;
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        simpleStepDetector = new SimpleStepDetector();
+        simpleStepDetector.registerListener(this);
+
+        time1 = System.currentTimeMillis();
+        Logger.d("Movement Initialize Done");
+    }
+
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            simpleStepDetector.updateAccel(
+                event.timestamp, event.values[0], event.values[1], event.values[2]);
+        }
+    }
+
+    @Override
+    public void step(long timeNs) {
+        numSteps++;
+
+        long time2 = System.currentTimeMillis();
+
+        if(time2 - time1 > 5000){
+            if (numSteps > 70)
+                Logger.d("跑步");
+            else if(numSteps <= 70 && numSteps >= 30)
+                Logger.d("走路");
+            else
+                Logger.d("静止");
+            Logger.d("" + numSteps);
+            numSteps = 0;
+            time1 = time2;
+        }
+
+    }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -209,13 +314,18 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         android.text.format.DateFormat.format("yyyy-MM-dd_hh:mm:ss", now);
 
         try {
-            String mPath = Environment.getExternalStorageDirectory().toString() + "/PM2.5/" + now + ".jpg";
+            String mDirectoryPath = Environment.getExternalStorageDirectory().toString() + "/PM2.5/";
+            String mFilePath = mDirectoryPath + now + ".jpg";
             View view = getWindow().getDecorView().getRootView();
             view.setDrawingCacheEnabled(true);
             Bitmap bitmap = Bitmap.createBitmap(view.getDrawingCache());
             view.setDrawingCacheEnabled(false);
 
-            File imageFile = new File(mPath);
+            File imageDirectory = new File(mDirectoryPath);
+            File imageFile = new File(mFilePath);
+            if (!imageDirectory.exists()) {
+                imageDirectory.mkdirs();
+            }
 
             FileOutputStream outputStream = new FileOutputStream(imageFile);
             int quality = 100;
@@ -234,20 +344,21 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
     @Override
     public void menuItemClicked(int menuNumber) {
-//        Toast.makeText(this, "" + menuNumber, Toast.LENGTH_SHORT).show();
+        Intent shareIntent = new Intent();
         switch (menuNumber) {
             case 1:
-                Intent shareIntent = new Intent();
                 shareIntent.setComponent(new ComponentName("com.tencent.mm", "com.tencent.mm.ui.tools.ShareToTimeLineUI"));
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.setType("image/*");
                 shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
                 shareIntent.putExtra("Kdescription", "This is a demo");
-                Uri uri = Uri.fromFile(getScreenShot());
-                shareIntent.putExtra(Intent.EXTRA_STREAM, uri);
+                shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(getScreenShot()));
                 startActivity(shareIntent);
                 break;
             case 2:
+                shareIntent.setType("image/*");
+                shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(getScreenShot()));
+                startActivity(Intent.createChooser(shareIntent, "请选择"));
                 break;
             case 3:
                 break;

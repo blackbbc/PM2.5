@@ -23,7 +23,7 @@ import java.util.Iterator;
 /**
  * Created by sweet on 15-9-9.
  */
-public class GPSService extends Service {
+public class GPSService extends IntentService {
     LocationManager lm;
     Criteria ct;
     String provider;
@@ -33,7 +33,7 @@ public class GPSService extends Service {
     private int timespace = 1000;
 
     public GPSService() {
-        super();
+        super("GPS");
     }
 
     @Override
@@ -43,13 +43,8 @@ public class GPSService extends Service {
     }
 
     @Override
-    public void onStart(Intent intent, int startId) {
-        super.onStart(intent, startId);
-    }
+    protected void onHandleIntent(Intent intent) {
 
-    @Override
-    public IBinder onBind(Intent intent) {
-        return null;
     }
 
     private void initLocation()
@@ -148,14 +143,11 @@ public class GPSService extends Service {
         }
     };
 
-private class AutoThread extends Thread
-    {
+private class AutoThread extends Thread {
         private boolean running = true;
-        private Handler h = new Handler()
-        {
+        private Handler h = new Handler() {
             @Override
-            public void handleMessage(Message msg)
-            {
+            public void handleMessage(Message msg) {
                 //showInfo(getLastPosition(), 2);
             }
         };
