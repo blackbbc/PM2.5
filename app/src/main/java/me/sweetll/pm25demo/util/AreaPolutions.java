@@ -34,7 +34,7 @@ public class AreaPolutions {
 		Vector<Polution> polutions = new Vector<Polution>();
 		String result;
 		try {
-			String url = ConstantValues.polutionsURL+"?area="+ URLEncoder.encode(location, "utf-8");
+			String url = ConstantValues.pollutionsURL+"?area="+ URLEncoder.encode(location, "utf-8");
 			HttpClient hc = new HttpClient(url);
 			Thread thread = new Thread(hc);
 			thread.start();

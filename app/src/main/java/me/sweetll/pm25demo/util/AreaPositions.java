@@ -18,7 +18,7 @@ public class AreaPositions {
 		HashMap<String,Vector<Position>> areas = new HashMap<String,Vector<Position>>();
 
 //		String result = HttpClient.getCrawlResult(ConstantValues.allPositionsURL);
-        String url = ConstantValues.allPositionsURL;
+        String url = ConstantValues.positionsURL;
         HttpClient hc = new HttpClient(url);
         Thread thread = new Thread(hc);
         thread.start();

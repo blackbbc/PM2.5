@@ -54,7 +54,9 @@ public class LocationInformation {
 		HashMap<String,Vector<Position>> areas = AreaPositions.getAllPositions();
 		Vector<Position> positions = areas.get(city);
 		Log.e("positions", positions.size()+"");
+
 		String nearestDetectionLocation = this.getNearestDetectionLocation(positions);
+
 		for (Polution polution:polutions) {
 			if (polution.getPosition_name() == nearestDetectionLocation) {
 				this.setPm2_5_density(polution.getPM2_5());

@@ -1,7 +1,5 @@
 package me.sweetll.pm25demo;
 
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -9,21 +7,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Typeface;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
-import android.location.Criteria;
-import android.location.GpsSatellite;
-import android.location.GpsStatus;
-import android.location.Location;
-import android.location.LocationListener;
-import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Environment;
-import android.os.Handler;
-import android.os.Message;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -31,40 +20,20 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
-import com.github.mikephil.charting.charts.BarChart;
-import com.github.mikephil.charting.charts.LineChart;
-import com.github.mikephil.charting.components.Legend;
-import com.github.mikephil.charting.components.XAxis;
-import com.github.mikephil.charting.components.YAxis;
-import com.github.mikephil.charting.data.BarData;
-import com.github.mikephil.charting.data.BarDataSet;
-import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.utils.ValueFormatter;
 import com.hookedonplay.decoviewlib.DecoView;
 import com.hookedonplay.decoviewlib.charts.DecoDrawEffect;
 import com.hookedonplay.decoviewlib.charts.SeriesItem;
 import com.hookedonplay.decoviewlib.events.DecoEvent;
-import com.oguzdev.circularfloatingactionmenu.library.FloatingActionButton;
-import com.oguzdev.circularfloatingactionmenu.library.FloatingActionMenu;
-import com.oguzdev.circularfloatingactionmenu.library.SubActionButton;
 import com.orhanobut.logger.Logger;
-
-import org.w3c.dom.Text;
 
 import java.io.File;
 import java.io.FileOutputStream;
-import java.net.URI;
-import java.util.ArrayList;
 import java.util.Date;
-import java.util.Iterator;
 import java.util.Timer;
 
 import butterknife.Bind;
@@ -75,6 +44,7 @@ import me.sweetll.pm25demo.movement.SimpleStepDetector;
 import me.sweetll.pm25demo.movement.StepListener;
 import me.sweetll.pm25demo.service.DensityService;
 import me.sweetll.pm25demo.service.GPSService;
+import me.sweetll.pm25demo.service.LocationService;
 import me.sweetll.pm25demo.util.GlobalGlass;
 
 public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface, SensorEventListener, StepListener{
@@ -123,8 +93,10 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         chartIndicator.setViewPager(chartViewpager);
 
         initArcView();
-        initGPSService(); //室内室外
-        initMovement();   //运动状态
+        initGPSService();      //室内室外
+        initMovement();        //运动状态
+        initLocationService(); //位置信息
+        initDensityService();  //PM2.5浓度
 
         Intent intent = new Intent(this, DensityService.class);
         intent.putExtra("city", "上海");
@@ -219,12 +191,12 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
                 .build());
     }
 
-    private void initGPSService() {
+    protected void initGPSService() {
         Intent GPSIntent= new Intent(this, GPSService.class);
         startService(GPSIntent);
     }
 
-    private void initMovement() {
+    protected void initMovement() {
         numSteps = 0;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
         accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
@@ -232,7 +204,17 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         simpleStepDetector.registerListener(this);
 
         time1 = System.currentTimeMillis();
-        Logger.d("Movement Initialize Done");
+    }
+
+    protected void initLocationService() {
+        Intent LocationIntent = new Intent(this, LocationService.class);
+        startService(LocationIntent);
+    }
+
+    protected void initDensityService() {
+        Intent DensityIntent = new Intent(this, DensityService.class);
+        DensityIntent.putExtra("city", "上海");
+        startService(DensityIntent);
     }
 
     @Override

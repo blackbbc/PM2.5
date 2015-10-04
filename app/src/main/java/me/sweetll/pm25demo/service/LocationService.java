@@ -9,107 +9,83 @@ import com.baidu.location.LocationClient;
 import com.baidu.location.LocationClientOption;
 import com.baidu.location.LocationClientOption.LocationMode;
 import com.baidu.mapapi.model.LatLng;
+import com.orhanobut.logger.Logger;
 
+import android.app.IntentService;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.location.Criteria;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
+import android.os.Bundle;
 import android.os.IBinder;
 import android.os.Vibrator;
 import android.widget.TextView;
 
-public class LocationService extends Service {
-	
-	private LocationClient mLocationClient;
-    public MyLocationListener mMyLocationListener;
-    public TextView tv;
-    public Vibrator mVibrator;
-    public int span = 1000;
-    private double latitude,longtitude;
-    private boolean flag;
-	public String city;
+public class LocationService extends IntentService {
+    LocationManager lm;
+    public static final int TIME_INTERVAL = 1000;
 
-    @Override
-	public void onCreate() {   
-    	flag = true;
-        mLocationClient = new LocationClient(this.getApplicationContext());
-        mVibrator =(Vibrator)getApplicationContext().getSystemService(Service.VIBRATOR_SERVICE);       
-        mLocationClient.registerLocationListener(new MyLocationListener());     
-        this.initLocation();
-    }    
-    
-    @Override
-	public void onDestroy() {  
-    	mLocationClient.stop();
-    	super.onDestroy();
-    }  
-           
-    @Override
-    public void onStart(Intent intent,int startId) {
-    	mLocationClient.start();  
-    	super.onStart(intent, startId);
+    public LocationService() {
+        super("location");
     }
 
-	@Override
-	public IBinder onBind(Intent intent) {
-		
-		return null;
-	}
-	
-	@Override  
-    public int onStartCommand(Intent intent, int flags, int startId) {//��дonStartCommand����  
-		IntentFilter filter = new IntentFilter();//����IntentFilter����  
-		filter.addAction(".Locationervice");  
-        doJob();//���÷��������߳�  
-        return super.onStartCommand(intent, flags, startId);  
-    }  
-	
-	 public void doJob(){  
-         new Thread(){  
-        	 public void run(){  
-        		 while(flag){  
-        			 try{//˯��һ��ʱ��  
-        				 Thread.sleep(span);  
-        			 	}	  
-                      	catch(Exception e){  
-                      		e.printStackTrace();  
-                      	}  
-                       	Intent intent = new Intent();//����Intent����  
-                        intent.setAction(".MainActivity");  
-                        intent.putExtra("latitude", latitude);  
-                        intent.putExtra("longtitude", longtitude); 
-                        intent.putExtra("city", city);
-                        sendBroadcast(intent);//���͹㲥  
-        		 }                                  
-        	 }                   
-         }.start();  
-	 } 
-	 
-    public class MyLocationListener implements BDLocationListener {
-        @Override
-        public void onReceiveLocation(BDLocation location) {
-        	latitude = location.getLatitude();
-        	longtitude = location.getLongitude();
-//        	city = location.getCity();
-//        	city = city.substring(0,city.length()-1);
+    @Override
+	public void onCreate() {
+        super.onCreate();
+        init();
+    }
+
+    @Override
+    public void onHandleIntent(Intent intent) {
+
+    }
+
+    private void init(){
+        lm = (LocationManager)getSystemService(Context.LOCATION_SERVICE);
+        Criteria criteria = new Criteria();
+        criteria.setAccuracy(Criteria.ACCURACY_COARSE);  //模糊模式
+        criteria.setAltitudeRequired(false);             //不提供海拔信息
+        criteria.setBearingRequired(false);              //不提供方向信息
+        criteria.setCostAllowed(true);                   //允许运营商计费
+        criteria.setPowerRequirement(Criteria.POWER_LOW);//低电池消耗
+        criteria.setSpeedRequired(false);                //不提供位置信息
+
+        String provider = lm.getBestProvider(criteria, true);
+
+        try {
+            lm.requestLocationUpdates(provider, TIME_INTERVAL, 0, locationListener);
+        } catch (SecurityException e) {
+            Logger.e(e.getMessage());
         }
     }
-    
-    private void initLocation(){
-        LocationClientOption option = new LocationClientOption();
-        option.setLocationMode(LocationMode.Hight_Accuracy);//��ѡ��Ĭ�ϸ߾��ȣ����ö�λģʽ���߾��ȣ��͹��ģ����豸
-        option.setCoorType("bd09ll");//��ѡ��Ĭ��gcj02�����÷��صĶ�λ�������ϵ��
-        option.setScanSpan(span);//��ѡ��Ĭ��0��������λһ�Σ����÷���λ����ļ����Ҫ���ڵ���1000ms������Ч��
-        option.setIsNeedAddress(true);//��ѡ�������Ƿ���Ҫ��ַ��Ϣ��Ĭ�ϲ���Ҫ
-        option.setOpenGps(true);//��ѡ��Ĭ��false,�����Ƿ�ʹ��gps
-        option.setLocationNotify(true);//��ѡ��Ĭ��false�������Ƿ�gps��Чʱ����1S1��Ƶ�����GPS���
-        option.setIgnoreKillProcess(true);//��ѡ��Ĭ��true����λSDK�ڲ���һ��SERVICE�����ŵ��˶������̣������Ƿ���stop��ʱ��ɱ��������̣�Ĭ�ϲ�ɱ��
-        option.setEnableSimulateGps(false);//��ѡ��Ĭ��false�������Ƿ���Ҫ����gps��������Ĭ����Ҫ
-        option.setIsNeedLocationDescribe(true);//��ѡ��Ĭ��false�������Ƿ���Ҫλ�����廯�����������BDLocation.getLocationDescribe��õ�����������ڡ��ڱ����찲�Ÿ�����
-        option.setIsNeedLocationPoiList(true);//��ѡ��Ĭ��false�������Ƿ���ҪPOI�����������BDLocation.getPoiList��õ�
-        mLocationClient.setLocOption(option);
-    }
+
+    private final LocationListener locationListener = new LocationListener() {
+        @Override
+        public void onLocationChanged(Location location) {
+            DensityService.longitude = location.getLongitude();
+            DensityService.latitude = location.getLatitude();
+        }
+
+        @Override
+        public void onStatusChanged(String provider, int status, Bundle extras) {
+
+        }
+
+        @Override
+        public void onProviderEnabled(String provider) {
+
+        }
+
+        @Override
+        public void onProviderDisabled(String provider) {
+
+        }
+    };
     
 
 }

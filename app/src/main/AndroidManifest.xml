@@ -49,9 +49,8 @@
             android:name="com.baidu.location.f"
             android:enabled="true"
             android:process=":remote" />
-        <service
-            android:name=".service.LocationService"
-            android:enabled="true" />
+        <service android:name=".service.LocationService"
+            android:exported="false" />
         <service android:name=".service.DensityService"
             android:exported="false" />
     </application>
