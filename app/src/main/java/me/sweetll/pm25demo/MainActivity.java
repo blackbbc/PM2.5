@@ -5,6 +5,7 @@ import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
@@ -21,6 +22,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.app.NotificationCompat;
@@ -272,6 +274,26 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
                 startActivity(intent);
                 return true;
             case R.id.action_settings:
+                return true;
+            case R.id.action_quit:
+                AlertDialog.Builder mBuilder = new AlertDialog.Builder(this);
+                mBuilder.setTitle("退出");
+                mBuilder.setMessage("真的要退出吗？");
+                mBuilder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        Intent intent = new Intent(MainActivity.this, DBService.class);
+                        stopService(intent);
+                        finish();
+                    }
+                });
+                mBuilder.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+                mBuilder.create().show();
                 return true;
         }
 

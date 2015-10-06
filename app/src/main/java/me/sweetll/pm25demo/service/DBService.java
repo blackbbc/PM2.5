@@ -61,7 +61,6 @@ public class DBService extends Service {
 
     @Override
     public void onDestroy() {
-
     }
 
 	protected void init() {
@@ -77,7 +76,7 @@ public class DBService extends Service {
 		NotificationCompat.Builder mBuilder =
 				new NotificationCompat.Builder(this)
 				.setSmallIcon(R.drawable.ic_google_plus)
-				.setContentTitle("PM2.5吸入量")
+				.setContentTitle("PM2.5")
 				.setContentText("服务运行中")
 				.setContentIntent(pendingIntent)
 				.setOngoing(true);
