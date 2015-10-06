@@ -11,7 +11,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
-import android.os.Looper;
+import android.os.HandlerThread;
+import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
@@ -28,14 +29,13 @@ public class DBService extends Service {
 	public int span = 5000;
 	private DBAccess db;
 
-	private Looper mServiceLooper;
-
     public static Double PM25 = 0.0;
 
 	public static final int TIME_INTERVAL = 5000;
 
-    public Handler handler = new Handler();
-    public Runnable runnable = new Runnable() {
+    private HandlerThread thread;
+    private Handler handler = new Handler();
+    private Runnable runnable = new Runnable() {
         @Override
         public void run() {
             addPM25();
@@ -49,7 +49,26 @@ public class DBService extends Service {
 		init();
     }
 
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        return START_STICKY;
+    }
+
+    @Override
+    public IBinder onBind(Intent intent) {
+        return null;
+    }
+
+    @Override
+    public void onDestroy() {
+
+    }
+
 	protected void init() {
+        HandlerThread thread = new HandlerThread("DBService");
+        thread.start();
+
+        handler = new Handler(thread.getLooper());
         handler.post(runnable);
 
 		Intent notificationIntent = new Intent(this, MainActivity.class);
@@ -62,12 +81,7 @@ public class DBService extends Service {
 				.setContentText("服务运行中")
 				.setContentIntent(pendingIntent)
 				.setOngoing(true);
-		Notification notification = mBuilder.build();
 
-//		NotificationManager notificationManager =
-//				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
-//		notificationManager.notify(12450, notification);
-//		Notification notification= mBuilder.build();
 		startForeground(12450, mBuilder.build());
 	}
 
@@ -99,6 +113,9 @@ public class DBService extends Service {
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
+    /*
+    暂时不支持数据库
+     */
 	 public void doJob(){
          new Thread(){  
         	 public void run(){  
