@@ -1,5 +1,7 @@
 package me.sweetll.pm25demo;
 
+import android.app.Notification;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -21,6 +23,7 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -32,6 +35,8 @@ import com.hookedonplay.decoviewlib.charts.DecoDrawEffect;
 import com.hookedonplay.decoviewlib.charts.SeriesItem;
 import com.hookedonplay.decoviewlib.events.DecoEvent;
 import com.orhanobut.logger.Logger;
+import com.tencent.connect.share.QQShare;
+import com.tencent.tauth.Tencent;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -56,6 +61,10 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     @Bind(R.id.gooey_menu) GooeyMenu gooeyMenu;
 
     private ActionBarDrawerToggle actionBarDrawerToggle;
+    int seriesIndex;
+    int series1Index;
+
+    Tencent mTencent;
 
     //Movement
     private SimpleStepDetector simpleStepDetector;
@@ -93,6 +102,8 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         chartViewpager.setAdapter(chartPagerAdapter);
         chartIndicator.setViewPager(chartViewpager);
 
+        mTencent = Tencent.createInstance("1104861076", getApplicationContext());
+
         initArcView();
         initGPSService();      //室内室外
         initMovement();        //运动状态
@@ -120,7 +131,10 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         @Override
         public void onReceive(Context context, Intent intent) {
             Double mPm2_5 = intent.getDoubleExtra("pm2_5", 0);
-            pm_num_view.setText(String.valueOf(mPm2_5));
+            arcView.addEvent(new DecoEvent.Builder(mPm2_5.intValue())
+                    .setIndex(series1Index)
+                    .build());
+            pm_num_view.setText(String.valueOf(mPm2_5.intValue()));
         }
     };
 
@@ -136,14 +150,14 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     private void initArcView() {
         // Create background track
         SeriesItem seriesItem = new SeriesItem.Builder(Color.argb(255, 218, 218, 218))
-                .setRange(0, 100, 0)
+                .setRange(0, 1000, 0)
                 .setInitialVisibility(true)
                 .setLineWidth(24f)
                 .build();
 
         //Create data series track
         SeriesItem seriesItem1 = new SeriesItem.Builder(Color.argb(255, 64, 196, 0))
-                .setRange(0, 100, 0)
+                .setRange(0, 1000, 0)
                 .setInitialVisibility(false)
                 .setLineWidth(24f)
                 .build();
@@ -152,7 +166,7 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
             @Override
             public void onSeriesItemAnimationProgress(float v, float v1) {
                 pm_num_view.setText("" + (int)v1 + "微克");
-                healthy_view.setText("约等于" + (int)(v1 / 10) + "支烟");
+                healthy_view.setText("约等于" + (int)(v1 / 12) + "支烟");
             }
 
             @Override
@@ -161,10 +175,10 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
             }
         });
 
-        int seriesIndex = arcView.addSeries(seriesItem);
-        int series1Index = arcView.addSeries(seriesItem1);
+        seriesIndex = arcView.addSeries(seriesItem);
+        series1Index = arcView.addSeries(seriesItem1);
 
-        arcView.addEvent(new DecoEvent.Builder(100)
+        arcView.addEvent(new DecoEvent.Builder(1000)
                 .setIndex(seriesIndex)
                 .setDuration(3000)
                 .setDelay(100)
@@ -176,10 +190,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
                 .setDelay(1250)
                 .build());
 
-        arcView.addEvent(new DecoEvent.Builder(25)
-                .setIndex(series1Index)
-                .setDelay(3250)
-                .build());
     }
 
     protected void initMovement() {
@@ -325,14 +335,19 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
                 shareIntent.setAction(Intent.ACTION_SEND);
                 shareIntent.setType("image/*");
                 shareIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_GRANT_READ_URI_PERMISSION);
-                shareIntent.putExtra("Kdescription", "This is a demo");
+                shareIntent.putExtra("Kdescription", "今天我的PM2.5吸入量");
                 shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(getScreenShot()));
                 startActivity(shareIntent);
                 break;
             case 2:
-                shareIntent.setType("image/*");
-                shareIntent.putExtra(Intent.EXTRA_STREAM, Uri.fromFile(getScreenShot()));
-                startActivity(Intent.createChooser(shareIntent, "请选择"));
+                final Bundle params = new Bundle();
+                params.putInt(QQShare.SHARE_TO_QQ_KEY_TYPE, QQShare.SHARE_TO_QQ_TYPE_DEFAULT);
+                params.putString(QQShare.SHARE_TO_QQ_TITLE, "PM2.5");
+                params.putString(QQShare.SHARE_TO_QQ_SUMMARY,  "今天我的PM2.5吸入量");
+                params.putString(QQShare.SHARE_TO_QQ_TARGET_URL,  "http://www.qq.com/news/1.html");
+                params.putString(QQShare.SHARE_TO_QQ_IMAGE_URL, getScreenShot().getAbsolutePath());
+                params.putString(QQShare.SHARE_TO_QQ_APP_NAME, "PM2.5Demo");
+                mTencent.shareToQQ(MainActivity.this, params, null);
                 break;
             case 3:
                 break;

@@ -3,22 +3,32 @@ package me.sweetll.pm25demo.service;
 import java.util.Calendar;
 
 import android.app.IntentService;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
+import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Handler;
+import android.os.Looper;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import me.sweetll.pm25demo.MainActivity;
+import me.sweetll.pm25demo.R;
 import me.sweetll.pm25demo.constants.ConstantValues;
 import me.sweetll.pm25demo.model.StateInformation;
 import me.sweetll.pm25demo.util.DBAccess;
 
-public class DBService extends IntentService {
+public class DBService extends Service {
     public static final String ACTION = "me.sweetll.pm25demo.service.DBService";
 
 	public int span = 5000;
 	private DBAccess db;
+
+	private Looper mServiceLooper;
 
     public static Double PM25 = 0.0;
 
@@ -33,10 +43,6 @@ public class DBService extends IntentService {
         }
     };
 
-	public DBService() {
-		super("database");
-	}
-
 	@Override
 	public void onCreate() {
 		super.onCreate();
@@ -45,11 +51,24 @@ public class DBService extends IntentService {
 
 	protected void init() {
         handler.post(runnable);
-	}
 
-	@Override
-	protected void onHandleIntent(Intent intent) {
+		Intent notificationIntent = new Intent(this, MainActivity.class);
+		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
 
+		NotificationCompat.Builder mBuilder =
+				new NotificationCompat.Builder(this)
+				.setSmallIcon(R.drawable.ic_google_plus)
+				.setContentTitle("PM2.5吸入量")
+				.setContentText("服务运行中")
+				.setContentIntent(pendingIntent)
+				.setOngoing(true);
+		Notification notification = mBuilder.build();
+
+//		NotificationManager notificationManager =
+//				(NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+//		notificationManager.notify(12450, notification);
+//		Notification notification= mBuilder.build();
+		startForeground(12450, mBuilder.build());
 	}
 
     public void addPM25() {
