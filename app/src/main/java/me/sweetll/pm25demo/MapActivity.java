@@ -24,7 +24,6 @@ import java.util.Calendar;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import me.sweetll.pm25demo.constants.LocationInformation;
 import me.sweetll.pm25demo.service.LocationService;
 
 public class MapActivity extends AppCompatActivity {
@@ -32,7 +31,6 @@ public class MapActivity extends AppCompatActivity {
 
     private BaiduMap mBaiduMap = null;
     private DataReceiver dataReceiver;
-    public LocationInformation Li;
 
     private double preLat = -1, preLon = -1;
     public ArrayList<LatLng> points;
@@ -48,7 +46,6 @@ public class MapActivity extends AppCompatActivity {
         mBaiduMap = mMapView.getMap();
         mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
 
-        Li = new LocationInformation();
         points = new ArrayList<>();
         startService(new Intent(this, LocationService.class));
     }
@@ -111,18 +108,8 @@ public class MapActivity extends AppCompatActivity {
 //            cityView.setText("µ±Ç°³ÇÊÐ£º "+city);
 //            locationView.setText("µ±Ç°GPS×ø±ê£º "+latitude + " " + longtitude + " " + points.size());
 
-            Li.setCity(city);
-            Li.setLatitude(latitude);
-            Li.setLongtitude(longtitude);
             int minute = Calendar.getInstance().get(Calendar.MINUTE);
 
-//            String value = MainActivity.this.getString(R.string.defaultPM25);
-//            if (pm2_5View.getText().toString() == value) {
-//                pm2_5View.setText("µ±Ç°PM2.5Å¨¶È£º "+Li.getPm2_5_density()+"ºÁ¿Ë/Ã¿Á¢·½Ã×");
-//            }
-//            if ((minute-10)%60==0) {
-//                pm2_5View.setText("µ±Ç°PM2.5Å¨¶È£º "+Li.getPm2_5_density()+"ºÁ¿Ë/Ã¿Á¢·½Ã×");
-//            }
             if ((preLat!=latitude&&preLon!=longtitude)&&(latitude!=0&&longtitude!=0)) {
                 LatLng point = new LatLng(latitude,longtitude);
                 points.add(point);

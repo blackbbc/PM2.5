@@ -13,6 +13,8 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.net.Uri;
 import android.os.Environment;
+import android.support.annotation.UiThread;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBar;
@@ -34,18 +36,16 @@ import com.orhanobut.logger.Logger;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.util.Date;
-import java.util.Timer;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import me.relex.circleindicator.CircleIndicator;
-import me.sweetll.pm25demo.constants.LocationInformation;
 import me.sweetll.pm25demo.movement.SimpleStepDetector;
 import me.sweetll.pm25demo.movement.StepListener;
+import me.sweetll.pm25demo.service.DBService;
 import me.sweetll.pm25demo.service.DensityService;
 import me.sweetll.pm25demo.service.GPSService;
 import me.sweetll.pm25demo.service.LocationService;
-import me.sweetll.pm25demo.util.GlobalGlass;
 
 public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface, SensorEventListener, StepListener{
     @Bind(R.id.drawer_layout) DrawerLayout mDrawer;
@@ -63,17 +63,18 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     private Sensor accel;
 
     private int numSteps;
-    private Timer timer;
     private long time1;
+    public static MotionStatus motionStatus = MotionStatus.STATIC;
 
-    private DataReceiver dataReceiver;
+    public static enum MotionStatus{
+        NULL, STATIC, WALK, RUN
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
-        GlobalGlass.Initialize(this);
 
         setSupportActionBar(toolbar);
         final ActionBar ab = getSupportActionBar();
@@ -97,46 +98,36 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         initMovement();        //运动状态
         initLocationService(); //位置信息
         initDensityService();  //PM2.5浓度
-
-        Intent intent = new Intent(this, DensityService.class);
-        intent.putExtra("city", "上海");
-        startService(intent);
-
-//        LocationInformation information = new LocationInformation();
-//        information.setCity("上海");
-//        Logger.d("" + information.getPm2_5_density());
+        initDBService();       //数据库服务
     }
 
     @Override
     public void onResume() {
         super.onResume();
         sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
+        IntentFilter filter = new IntentFilter(DBService.ACTION);
+        LocalBroadcastManager.getInstance(this).registerReceiver(pm25Receiver, filter);
     }
 
     @Override
     public void onPause() {
         super.onPause();
         sensorManager.unregisterListener(this);
+        LocalBroadcastManager.getInstance(this).unregisterReceiver(pm25Receiver);
     }
+
+    private BroadcastReceiver pm25Receiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Double mPm2_5 = intent.getDoubleExtra("pm2_5", 0);
+            pm_num_view.setText(String.valueOf(mPm2_5));
+        }
+    };
 
     @Override
     protected void onStart() {
         super.onStart();
-        dataReceiver = new DataReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(".MainActivity");
-        registerReceiver(dataReceiver, intentFilter);
     }
-
-    private class DataReceiver extends BroadcastReceiver {
-        @Override
-        public void onReceive(Context context, Intent intent) {
-            String density = intent.getStringExtra("density");
-            String outdoor = intent.getStringExtra("outdoor");
-            String status = intent.getStringExtra("status");
-        }
-    }
-
 
     private ActionBarDrawerToggle setupDrawerToggle() {
         return new ActionBarDrawerToggle(this, mDrawer, toolbar, R.string.drawer_open,  R.string.drawer_close);
@@ -191,11 +182,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
                 .build());
     }
 
-    protected void initGPSService() {
-        Intent GPSIntent= new Intent(this, GPSService.class);
-        startService(GPSIntent);
-    }
-
     protected void initMovement() {
         numSteps = 0;
         sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
@@ -204,6 +190,11 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         simpleStepDetector.registerListener(this);
 
         time1 = System.currentTimeMillis();
+    }
+
+    protected void initGPSService() {
+        Intent GPSIntent= new Intent(this, GPSService.class);
+        startService(GPSIntent);
     }
 
     protected void initLocationService() {
@@ -217,6 +208,11 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         startService(DensityIntent);
     }
 
+    protected void initDBService() {
+        Intent DBIntent = new Intent(this, DBService.class);
+        startService(DBIntent);
+    }
+
     @Override
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
     }
@@ -227,28 +223,24 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
             simpleStepDetector.updateAccel(
                 event.timestamp, event.values[0], event.values[1], event.values[2]);
         }
+
+        long time2 = System.currentTimeMillis();
+        if(time2 - time1 > 5000){
+            if (numSteps > 70)
+                motionStatus = MotionStatus.RUN;
+            else if(numSteps <= 70 && numSteps >= 30)
+                motionStatus = MotionStatus.WALK;
+            else
+                motionStatus = MotionStatus.STATIC;
+            numSteps = 0;
+            time1 = time2;
+        }
     }
 
     @Override
     public void step(long timeNs) {
         numSteps++;
-
-        long time2 = System.currentTimeMillis();
-
-        if(time2 - time1 > 5000){
-            if (numSteps > 70)
-                Logger.d("跑步");
-            else if(numSteps <= 70 && numSteps >= 30)
-                Logger.d("走路");
-            else
-                Logger.d("静止");
-            Logger.d("" + numSteps);
-            numSteps = 0;
-            time1 = time2;
-        }
-
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {

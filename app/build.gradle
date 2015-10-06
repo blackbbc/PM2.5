@@ -29,6 +29,8 @@ dependencies {
     compile 'com.android.support:design:23.0.1'
     compile 'com.android.support:recyclerview-v7:23.0.1'
     compile 'com.android.support:percent:23.0.1'
+    compile 'nl.qbusict:cupboard:2.1.2'
+    compile 'org.apache.commons:commons-lang3:3.4'
     //3-rd party library
     compile 'com.jakewharton:butterknife:7.0.1'
     compile 'com.orhanobut:logger:1.11'

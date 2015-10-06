@@ -139,8 +139,4 @@ public class DensityService extends IntentService {
         }
     }
 
-    public static double getDensity() {
-        return mDensity;
-    }
-
 }

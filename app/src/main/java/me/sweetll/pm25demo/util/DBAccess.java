@@ -10,25 +10,24 @@ import android.database.sqlite.SQLiteDatabase;
 import android.util.Log;
 
 import me.sweetll.pm25demo.model.StateInformation;
-import me.sweetll.pm25demo.values.ConstantValue;
 
 public class DBAccess {
 	private DBUtil dbUtil;
 	private SQLiteDatabase db;
 	
 	private static String[] colNames = new String[]{
-		ConstantValue.DB_MetaData.STATE_ID_COL,
-		ConstantValue.DB_MetaData.STATE_USER_ID_COL,
-		ConstantValue.DB_MetaData.STATE_TIME_POINT_COL,
-		ConstantValue.DB_MetaData.STATE_LONGTITUDE_COL, 
-		ConstantValue.DB_MetaData.STATE_LATITUDE_COL,
-		ConstantValue.DB_MetaData.STATE_OUTDOOR_COL,
-		ConstantValue.DB_MetaData.STATE_STATUS_COL,
-		ConstantValue.DB_MetaData.STATE_STEPS_COL,
-		ConstantValue.DB_MetaData.STATE_AVG_RATE_COL, 
-		ConstantValue.DB_MetaData.STATE_VENTILATION_VOLUME_COL, 
-		ConstantValue.DB_MetaData.STATE_PM25_COL, 
-		ConstantValue.DB_MetaData.STATE_SOURCE_COL
+		DBConstants.DB_MetaData.STATE_ID_COL,
+		DBConstants.DB_MetaData.STATE_USER_ID_COL,
+		DBConstants.DB_MetaData.STATE_TIME_POINT_COL,
+		DBConstants.DB_MetaData.STATE_LONGTITUDE_COL,
+		DBConstants.DB_MetaData.STATE_LATITUDE_COL,
+		DBConstants.DB_MetaData.STATE_OUTDOOR_COL,
+		DBConstants.DB_MetaData.STATE_STATUS_COL,
+		DBConstants.DB_MetaData.STATE_STEPS_COL,
+		DBConstants.DB_MetaData.STATE_AVG_RATE_COL,
+		DBConstants.DB_MetaData.STATE_VENTILATION_VOLUME_COL,
+		DBConstants.DB_MetaData.STATE_PM25_COL,
+		DBConstants.DB_MetaData.STATE_SOURCE_COL
 	};
 	
 	public DBAccess(Context context) {
@@ -40,49 +39,49 @@ public class DBAccess {
 		db = dbUtil.getWritableDatabase();
 		
 		ContentValues cv = new ContentValues();
-		cv.put(ConstantValue.DB_MetaData.STATE_ID_COL, si.getId());
-		cv.put(ConstantValue.DB_MetaData.STATE_USER_ID_COL, si.getUserid());
-		cv.put(ConstantValue.DB_MetaData.STATE_TIME_POINT_COL, si.getTime_point());
-		cv.put(ConstantValue.DB_MetaData.STATE_LONGTITUDE_COL, si.getLongtitude());
-		cv.put(ConstantValue.DB_MetaData.STATE_LATITUDE_COL, si.getLatitude());
-		cv.put(ConstantValue.DB_MetaData.STATE_OUTDOOR_COL, si.getOutdoor());
-		cv.put(ConstantValue.DB_MetaData.STATE_STATUS_COL, si.getStatus());
-		cv.put(ConstantValue.DB_MetaData.STATE_STEPS_COL, si.getSteps());		
-		cv.put(ConstantValue.DB_MetaData.STATE_AVG_RATE_COL, si.getAvg_rate());
-		cv.put(ConstantValue.DB_MetaData.STATE_VENTILATION_VOLUME_COL, si.getVentilation_volume());
-		cv.put(ConstantValue.DB_MetaData.STATE_PM25_COL, si.getPm25());
-		cv.put(ConstantValue.DB_MetaData.STATE_SOURCE_COL, si.getSource());
+		cv.put(DBConstants.DB_MetaData.STATE_ID_COL, si.getId());
+		cv.put(DBConstants.DB_MetaData.STATE_USER_ID_COL, si.getUserid());
+		cv.put(DBConstants.DB_MetaData.STATE_TIME_POINT_COL, si.getTime_point());
+		cv.put(DBConstants.DB_MetaData.STATE_LONGTITUDE_COL, si.getLongtitude());
+		cv.put(DBConstants.DB_MetaData.STATE_LATITUDE_COL, si.getLatitude());
+		cv.put(DBConstants.DB_MetaData.STATE_OUTDOOR_COL, si.getOutdoor());
+		cv.put(DBConstants.DB_MetaData.STATE_STATUS_COL, si.getStatus());
+		cv.put(DBConstants.DB_MetaData.STATE_STEPS_COL, si.getSteps());
+		cv.put(DBConstants.DB_MetaData.STATE_AVG_RATE_COL, si.getAvg_rate());
+		cv.put(DBConstants.DB_MetaData.STATE_VENTILATION_VOLUME_COL, si.getVentilation_volume());
+		cv.put(DBConstants.DB_MetaData.STATE_PM25_COL, si.getPm25());
+		cv.put(DBConstants.DB_MetaData.STATE_SOURCE_COL, si.getSource());
 		
-		db.insert(ConstantValue.TABLE_NAME, null, cv);
+		db.insert(DBConstants.TABLE_NAME, null, cv);
 	}
 	
 	
 	public void deleteStateInfomation(StateInformation si) {
 		db = dbUtil.getWritableDatabase();
 		
-		db.delete(ConstantValue.TABLE_NAME, 
-				ConstantValue.DB_MetaData.STATE_ID_COL + "=" + si.getId(), null);
+		db.delete(DBConstants.TABLE_NAME,
+				DBConstants.DB_MetaData.STATE_ID_COL + "=" + si.getId(), null);
 	}
 	
 	public void updateStateInfomation(StateInformation si) {
 		db = dbUtil.getWritableDatabase();
 		
 		ContentValues cv = new ContentValues();
-		cv.put(ConstantValue.DB_MetaData.STATE_ID_COL, si.getId());
-		cv.put(ConstantValue.DB_MetaData.STATE_USER_ID_COL, si.getUserid());
-		cv.put(ConstantValue.DB_MetaData.STATE_TIME_POINT_COL, si.getTime_point());
-		cv.put(ConstantValue.DB_MetaData.STATE_LONGTITUDE_COL, si.getLongtitude());
-		cv.put(ConstantValue.DB_MetaData.STATE_LATITUDE_COL, si.getLatitude());
-		cv.put(ConstantValue.DB_MetaData.STATE_OUTDOOR_COL, si.getOutdoor());
-		cv.put(ConstantValue.DB_MetaData.STATE_STATUS_COL, si.getStatus());
-		cv.put(ConstantValue.DB_MetaData.STATE_STEPS_COL, si.getSteps());		
-		cv.put(ConstantValue.DB_MetaData.STATE_AVG_RATE_COL, si.getAvg_rate());
-		cv.put(ConstantValue.DB_MetaData.STATE_VENTILATION_VOLUME_COL, si.getVentilation_volume());
-		cv.put(ConstantValue.DB_MetaData.STATE_PM25_COL, si.getPm25());
-		cv.put(ConstantValue.DB_MetaData.STATE_SOURCE_COL, si.getSource());
+		cv.put(DBConstants.DB_MetaData.STATE_ID_COL, si.getId());
+		cv.put(DBConstants.DB_MetaData.STATE_USER_ID_COL, si.getUserid());
+		cv.put(DBConstants.DB_MetaData.STATE_TIME_POINT_COL, si.getTime_point());
+		cv.put(DBConstants.DB_MetaData.STATE_LONGTITUDE_COL, si.getLongtitude());
+		cv.put(DBConstants.DB_MetaData.STATE_LATITUDE_COL, si.getLatitude());
+		cv.put(DBConstants.DB_MetaData.STATE_OUTDOOR_COL, si.getOutdoor());
+		cv.put(DBConstants.DB_MetaData.STATE_STATUS_COL, si.getStatus());
+		cv.put(DBConstants.DB_MetaData.STATE_STEPS_COL, si.getSteps());
+		cv.put(DBConstants.DB_MetaData.STATE_AVG_RATE_COL, si.getAvg_rate());
+		cv.put(DBConstants.DB_MetaData.STATE_VENTILATION_VOLUME_COL, si.getVentilation_volume());
+		cv.put(DBConstants.DB_MetaData.STATE_PM25_COL, si.getPm25());
+		cv.put(DBConstants.DB_MetaData.STATE_SOURCE_COL, si.getSource());
 		
-		db.update(ConstantValue.TABLE_NAME, cv, 
-				ConstantValue.DB_MetaData.STATE_ID_COL + "=" + si.getId(), null);
+		db.update(DBConstants.TABLE_NAME, cv,
+				DBConstants.DB_MetaData.STATE_ID_COL + "=" + si.getId(), null);
 	}
 	
 	/*
@@ -90,8 +89,8 @@ public class DBAccess {
 	 */
 	public Cursor selectStateInformationByUserid(String userid) {
 		db = dbUtil.getReadableDatabase();
-		Cursor c = db.rawQuery("SELECT * FROM " + ConstantValue.TABLE_NAME 
-				+ " WHERE " + ConstantValue.DB_MetaData.STATE_USER_ID_COL + " = ? ", new String[]{userid}); 
+		Cursor c = db.rawQuery("SELECT * FROM " + DBConstants.TABLE_NAME
+				+ " WHERE " + DBConstants.DB_MetaData.STATE_USER_ID_COL + " = ? ", new String[]{userid});
 		
 		return c;
 	}
@@ -99,7 +98,7 @@ public class DBAccess {
 	public StateInformation selectLastStateInformation() {
 		Log.v("select","select first information");
 		db = dbUtil.getReadableDatabase();
-		Cursor c = db.rawQuery("SELECT * FROM " + ConstantValue.TABLE_NAME,null); 
+		Cursor c = db.rawQuery("SELECT * FROM " + DBConstants.TABLE_NAME,null);
 		if (c.moveToLast()) {
 			StateInformation si = this.transferCursorToState(c);		
 			return si;
@@ -116,9 +115,9 @@ public class DBAccess {
 	 */
 	public Cursor selectAllStateInformationCursor(String selection, String[] selectionArgs) {
 		db = dbUtil.getReadableDatabase();
-		Cursor c = db.query(ConstantValue.TABLE_NAME, colNames, 
+		Cursor c = db.query(DBConstants.TABLE_NAME, colNames,
 				selection, selectionArgs, null, null, 
-				ConstantValue.DB_MetaData.DEFAULT_ORDER);
+				DBConstants.DB_MetaData.DEFAULT_ORDER);
 		
 		return c;
 	}

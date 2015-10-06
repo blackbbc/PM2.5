@@ -3,15 +3,12 @@ package me.sweetll.pm25demo.service;
 import android.app.IntentService;
 import android.content.Context;
 import android.content.Intent;
-import android.location.Criteria;
 import android.location.GpsSatellite;
 import android.location.GpsStatus;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.location.LocationProvider;
 import android.os.Bundle;
-import android.os.Handler;
 import java.util.Iterator;
 
 import com.orhanobut.logger.Logger;
@@ -22,6 +19,7 @@ import com.orhanobut.logger.Logger;
 public class GPSService extends IntentService implements GpsStatus.Listener {
     LocationManager lm;
     GpsStatus mGpsStatus;
+    public static Boolean mInDoor = null;
 
     private final static int TIME_INTERVAL = 1000;
 
@@ -73,35 +71,27 @@ public class GPSService extends IntentService implements GpsStatus.Listener {
     };
 
     @Override
-    public void onGpsStatusChanged(int event)
-    {
+    public void onGpsStatusChanged(int event) {
         mGpsStatus = lm.getGpsStatus(null);
         switch (event)
         {
             case GpsStatus.GPS_EVENT_FIRST_FIX:// 第一次定位
                 break;
-            case GpsStatus.GPS_EVENT_SATELLITE_STATUS:
-            {
+            case GpsStatus.GPS_EVENT_SATELLITE_STATUS: {
                 // 得到所有收到的卫星的信息，包括 卫星的高度角、方位角、信噪比、和伪随机号（及卫星编号）
                 Iterable<GpsSatellite> allGps = mGpsStatus.getSatellites();
                 Iterator<GpsSatellite> items = allGps.iterator();
                 int i = 0;
                 int ii = 0;
-                while (items.hasNext())
-                {
+                while (items.hasNext()) {
                     GpsSatellite tmp = items.next();
                     if (tmp.usedInFix())
                         ii++;
                     i++;
                 }
-                Logger.d("可见卫星数：" + i);
-                Logger.d("已定位卫星数：" + ii);
 
-                if (ii>4) {
-                    //To do: 室外
-                } else {
-                    //To do: 室内
-                }
+                mInDoor = ii < 4;
+
                 break;
             }
             case GpsStatus.GPS_EVENT_STARTED:

@@ -2,47 +2,87 @@ package me.sweetll.pm25demo.service;
 
 import java.util.Calendar;
 
-import android.app.Service;
+import android.app.IntentService;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.os.IBinder;
+import android.os.Handler;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
+import me.sweetll.pm25demo.MainActivity;
+import me.sweetll.pm25demo.constants.ConstantValues;
 import me.sweetll.pm25demo.model.StateInformation;
 import me.sweetll.pm25demo.util.DBAccess;
 
-public class DBService extends Service {
+public class DBService extends IntentService {
+    public static final String ACTION = "me.sweetll.pm25demo.service.DBService";
 
-	public boolean flag = true;
 	public int span = 5000;
 	private DBAccess db;
-	
-	@Override
-	public IBinder onBind(Intent arg0) {
-		return null;
+
+    public static Double PM25 = 0.0;
+
+	public static final int TIME_INTERVAL = 5000;
+
+    public Handler handler = new Handler();
+    public Runnable runnable = new Runnable() {
+        @Override
+        public void run() {
+            addPM25();
+            handler.postDelayed(runnable, TIME_INTERVAL);
+        }
+    };
+
+	public DBService() {
+		super("database");
 	}
-	
+
 	@Override
-	public void onCreate() {   
-    	flag = true;  
-    	db = new DBAccess(this);
-		addStates();
-		Log.v("add states","add states success");
+	public void onCreate() {
+		super.onCreate();
+		init();
     }
-	
-	@Override  
-    public int onStartCommand(Intent intent, int flags, int startId) {
-		IntentFilter filter = new IntentFilter();
-		filter.addAction(".Locationservice");  
-		Log.v("do job","we are doing jobs");
-        doJob();//
-        return super.onStartCommand(intent, flags, startId);  
-    }  
-	
-	 public void doJob(){  
+
+	protected void init() {
+        handler.post(runnable);
+	}
+
+	@Override
+	protected void onHandleIntent(Intent intent) {
+
+	}
+
+    public void addPM25() {
+        Double mDensity = DensityService.mDensity;
+        Boolean mInDoor = GPSService.mInDoor;
+        MainActivity.MotionStatus mMotionStatus = MainActivity.motionStatus;
+
+        if (mDensity == null || mInDoor == null || mMotionStatus == MainActivity.MotionStatus.NULL)
+            return;
+
+        Double breath = 0.0;
+        if (mInDoor) {
+            mDensity /= 3;
+        }
+        if (mMotionStatus == MainActivity.MotionStatus.STATIC) {
+            breath = ConstantValues.static_breath;
+        } else if (mMotionStatus == MainActivity.MotionStatus.WALK) {
+            breath = ConstantValues.bicycle_breath;
+        } else if (mMotionStatus == MainActivity.MotionStatus.RUN) {
+            breath = ConstantValues.run_breath;
+        }
+
+        PM25 += mDensity*breath;
+
+        Intent intent = new Intent(ACTION);
+        intent.putExtra("pm2_5", PM25);
+
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
+    }
+
+	 public void doJob(){
          new Thread(){  
         	 public void run(){  
-        		 while(flag){  
         			 try{
         				 Thread.sleep(span);  
         			 	}	  
@@ -64,8 +104,7 @@ public class DBService extends Service {
                         }
                         addStates();
         		 }                                  
-        	 }                   
-         }.start();  
+         }.start();
 	 } 
 	 
 	 private StateInformation getNewestStateInformation() {
