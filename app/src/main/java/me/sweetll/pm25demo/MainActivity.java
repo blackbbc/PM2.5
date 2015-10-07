@@ -1,7 +1,5 @@
 package me.sweetll.pm25demo;
 
-import android.app.Notification;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -10,13 +8,9 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.hardware.Sensor;
-import android.hardware.SensorEvent;
-import android.hardware.SensorEventListener;
-import android.hardware.SensorManager;
+
 import android.net.Uri;
 import android.os.Environment;
-import android.support.annotation.UiThread;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -25,7 +19,6 @@ import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -47,12 +40,7 @@ import java.util.Date;
 import butterknife.Bind;
 import butterknife.ButterKnife;
 import me.relex.circleindicator.CircleIndicator;
-import me.sweetll.pm25demo.movement.SimpleStepDetector;
-import me.sweetll.pm25demo.movement.StepListener;
 import me.sweetll.pm25demo.service.DBService;
-import me.sweetll.pm25demo.service.DensityService;
-import me.sweetll.pm25demo.service.GPSService;
-import me.sweetll.pm25demo.service.LocationService;
 
 public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface {
     @Bind(R.id.drawer_layout) DrawerLayout mDrawer;
@@ -94,9 +82,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         mTencent = Tencent.createInstance("1104861076", getApplicationContext());
 
         initArcView();
-        initGPSService();      //室内室外
-        initLocationService(); //位置信息
-        initDensityService();  //PM2.5浓度
         initDBService();       //数据库服务
     }
 
@@ -178,24 +163,9 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
     }
 
-    protected void initGPSService() {
-        Intent GPSIntent= new Intent(this, GPSService.class);
-        startService(GPSIntent);
-    }
-
-    protected void initLocationService() {
-        Intent LocationIntent = new Intent(this, LocationService.class);
-        startService(LocationIntent);
-    }
-
-    protected void initDensityService() {
-        Intent DensityIntent = new Intent(this, DensityService.class);
-        DensityIntent.putExtra("city", "上海");
-        startService(DensityIntent);
-    }
-
     protected void initDBService() {
         Intent DBIntent = new Intent(this, DBService.class);
+        DBIntent.putExtra("city", "上海");
         startService(DBIntent);
     }
 

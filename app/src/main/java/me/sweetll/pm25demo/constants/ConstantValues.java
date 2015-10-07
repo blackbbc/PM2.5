@@ -12,10 +12,4 @@ public class ConstantValues {
 	public static final String pollutionsURL = "http://ilab.tongji.edu.cn/pm25/web/restful/air-qualities";
 	public static final String positionsURL = "http://ilab.tongji.edu.cn/pm25/web/restful/area-positions";
 
-	public static String movementStatus = "static";
-	public static String doorStatus = "outDoor";
-
-	public static double DENSITY;
-	public static String CITY;
-	
 }

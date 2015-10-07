@@ -24,7 +24,6 @@ import java.util.Calendar;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
-import me.sweetll.pm25demo.service.LocationService;
 
 public class MapActivity extends AppCompatActivity {
     @Bind(R.id.bmapView) MapView mMapView;
@@ -47,7 +46,6 @@ public class MapActivity extends AppCompatActivity {
         mBaiduMap.setMapType(BaiduMap.MAP_TYPE_NORMAL);
 
         points = new ArrayList<>();
-        startService(new Intent(this, LocationService.class));
     }
 
     @Override
