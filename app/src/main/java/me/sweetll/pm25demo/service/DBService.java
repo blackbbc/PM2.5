@@ -2,14 +2,13 @@ package me.sweetll.pm25demo.service;
 
 import java.util.Calendar;
 
-import android.app.IntentService;
-import android.app.Notification;
-import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
+import android.hardware.Sensor;
+import android.hardware.SensorEvent;
+import android.hardware.SensorEventListener;
+import android.hardware.SensorManager;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -21,9 +20,11 @@ import me.sweetll.pm25demo.MainActivity;
 import me.sweetll.pm25demo.R;
 import me.sweetll.pm25demo.constants.ConstantValues;
 import me.sweetll.pm25demo.model.StateInformation;
+import me.sweetll.pm25demo.movement.SimpleStepDetector;
+import me.sweetll.pm25demo.movement.StepListener;
 import me.sweetll.pm25demo.util.DBAccess;
 
-public class DBService extends Service {
+public class DBService extends Service implements SensorEventListener {
     public static final String ACTION = "me.sweetll.pm25demo.service.DBService";
 
 	public int span = 5000;
@@ -43,10 +44,22 @@ public class DBService extends Service {
         }
     };
 
+    //Movement
+    private SimpleStepDetector simpleStepDetector;
+    private SensorManager sensorManager;
+    private int numSteps;
+    private long time1;
+    public static MotionStatus motionStatus = MotionStatus.STATIC;
+    public enum MotionStatus{
+        NULL, STATIC, WALK, RUN
+    }
+
+
 	@Override
 	public void onCreate() {
 		super.onCreate();
 		init();
+        initMovement();
     }
 
     @Override
@@ -84,23 +97,61 @@ public class DBService extends Service {
 		startForeground(12450, mBuilder.build());
 	}
 
+    private void initMovement() {
+        numSteps = 0;
+        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
+        Sensor accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
+        sensorManager.registerListener(this, accelSensor, SensorManager.SENSOR_DELAY_FASTEST);
+        simpleStepDetector = new SimpleStepDetector();
+        simpleStepDetector.registerListener(new StepListener() {
+            @Override
+            public void step(long timeNs) {
+                numSteps++;
+            }
+        });
+        time1 = System.currentTimeMillis();
+    }
+    @Override
+    public void onAccuracyChanged(Sensor sensor, int accuracy) {
+    }
+
+    @Override
+    public void onSensorChanged(SensorEvent event) {
+        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
+            simpleStepDetector.updateAccel(
+                event.timestamp, event.values[0], event.values[1], event.values[2]);
+        }
+
+        long time2 = System.currentTimeMillis();
+        if(time2 - time1 > 5000){
+            if (numSteps > 70)
+                motionStatus = MotionStatus.RUN;
+            else if(numSteps <= 70 && numSteps >= 30)
+                motionStatus = MotionStatus.WALK;
+            else
+                motionStatus = MotionStatus.STATIC;
+            numSteps = 0;
+            time1 = time2;
+        }
+    }
+
     public void addPM25() {
         Double mDensity = DensityService.mDensity;
         Boolean mInDoor = GPSService.mInDoor;
-        MainActivity.MotionStatus mMotionStatus = MainActivity.motionStatus;
+        MotionStatus mMotionStatus = motionStatus;
 
-        if (mDensity == null || mInDoor == null || mMotionStatus == MainActivity.MotionStatus.NULL)
+        if (mDensity == null || mInDoor == null || mMotionStatus == MotionStatus.NULL)
             return;
 
         Double breath = 0.0;
         if (mInDoor) {
             mDensity /= 3;
         }
-        if (mMotionStatus == MainActivity.MotionStatus.STATIC) {
+        if (mMotionStatus == MotionStatus.STATIC) {
             breath = ConstantValues.static_breath;
-        } else if (mMotionStatus == MainActivity.MotionStatus.WALK) {
-            breath = ConstantValues.bicycle_breath;
-        } else if (mMotionStatus == MainActivity.MotionStatus.RUN) {
+        } else if (mMotionStatus == MotionStatus.WALK) {
+            breath = ConstantValues.walk_breath;
+        } else if (mMotionStatus == MotionStatus.RUN) {
             breath = ConstantValues.run_breath;
         }
 

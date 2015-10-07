@@ -54,7 +54,7 @@ import me.sweetll.pm25demo.service.DensityService;
 import me.sweetll.pm25demo.service.GPSService;
 import me.sweetll.pm25demo.service.LocationService;
 
-public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface, SensorEventListener, StepListener{
+public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMenuInterface {
     @Bind(R.id.drawer_layout) DrawerLayout mDrawer;
     @Bind(R.id.toolbar) Toolbar toolbar;
     @Bind(R.id.dynamicArcView) DecoView arcView;
@@ -67,19 +67,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     int series1Index;
 
     Tencent mTencent;
-
-    //Movement
-    private SimpleStepDetector simpleStepDetector;
-    private SensorManager sensorManager;
-    private Sensor accel;
-
-    private int numSteps;
-    private long time1;
-    public static MotionStatus motionStatus = MotionStatus.STATIC;
-
-    public static enum MotionStatus{
-        NULL, STATIC, WALK, RUN
-    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +95,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
         initArcView();
         initGPSService();      //室内室外
-        initMovement();        //运动状态
         initLocationService(); //位置信息
         initDensityService();  //PM2.5浓度
         initDBService();       //数据库服务
@@ -117,7 +103,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     @Override
     public void onResume() {
         super.onResume();
-        sensorManager.registerListener(this, accel, SensorManager.SENSOR_DELAY_FASTEST);
         IntentFilter filter = new IntentFilter(DBService.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(pm25Receiver, filter);
     }
@@ -125,7 +110,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     @Override
     public void onPause() {
         super.onPause();
-        sensorManager.unregisterListener(this);
         LocalBroadcastManager.getInstance(this).unregisterReceiver(pm25Receiver);
     }
 
@@ -194,16 +178,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
     }
 
-    protected void initMovement() {
-        numSteps = 0;
-        sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
-        accel = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        simpleStepDetector = new SimpleStepDetector();
-        simpleStepDetector.registerListener(this);
-
-        time1 = System.currentTimeMillis();
-    }
-
     protected void initGPSService() {
         Intent GPSIntent= new Intent(this, GPSService.class);
         startService(GPSIntent);
@@ -223,35 +197,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     protected void initDBService() {
         Intent DBIntent = new Intent(this, DBService.class);
         startService(DBIntent);
-    }
-
-    @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-    }
-
-    @Override
-    public void onSensorChanged(SensorEvent event) {
-        if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
-            simpleStepDetector.updateAccel(
-                event.timestamp, event.values[0], event.values[1], event.values[2]);
-        }
-
-        long time2 = System.currentTimeMillis();
-        if(time2 - time1 > 5000){
-            if (numSteps > 70)
-                motionStatus = MotionStatus.RUN;
-            else if(numSteps <= 70 && numSteps >= 30)
-                motionStatus = MotionStatus.WALK;
-            else
-                motionStatus = MotionStatus.STATIC;
-            numSteps = 0;
-            time1 = time2;
-        }
-    }
-
-    @Override
-    public void step(long timeNs) {
-        numSteps++;
     }
 
     @Override
