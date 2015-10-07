@@ -9,6 +9,7 @@ import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
@@ -35,6 +36,7 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.orhanobut.logger.Logger;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -42,6 +44,7 @@ import org.json.JSONObject;
 import me.sweetll.pm25demo.MainActivity;
 import me.sweetll.pm25demo.R;
 import me.sweetll.pm25demo.constants.ConstantValues;
+import me.sweetll.pm25demo.model.State;
 import me.sweetll.pm25demo.model.StateInformation;
 import me.sweetll.pm25demo.movement.SimpleStepDetector;
 import me.sweetll.pm25demo.movement.StepListener;
@@ -49,11 +52,12 @@ import me.sweetll.pm25demo.util.DBAccess;
 import me.sweetll.pm25demo.util.DBHelper;
 import me.sweetll.pm25demo.util.VolleyQueue;
 
+import static nl.qbusict.cupboard.CupboardFactory.cupboard;
+
 public class DBService extends Service implements SensorEventListener {
     public static final String ACTION = "me.sweetll.pm25demo.service.DBService";
 
-	public int span = 5000;
-	private DBAccess db;
+	private DBHelper dbHelper;
 
     //DB
     private static Double PM25 = 0.0;
@@ -133,6 +137,8 @@ public class DBService extends Service implements SensorEventListener {
     }
 
 	private void initDB() {
+        dbHelper = new DBHelper(getApplicationContext());
+
         HandlerThread thread = new HandlerThread("DBService");
         thread.start();
 
@@ -171,9 +177,12 @@ public class DBService extends Service implements SensorEventListener {
 
         PM25 += mDensity*breath;
 
+//        State state = new State("0", Long.valueOf(System.currentTimeMillis()), longitude.toString(), latitude.toString(),
+//                mInDoor.toString(), mMotionStatus.name(), Integer.valueOf(numSteps), );
+//        insertState(state);
+
         Intent intent = new Intent(ACTION);
         intent.putExtra("pm2_5", PM25);
-
         LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
     }
 
@@ -314,9 +323,6 @@ public class DBService extends Service implements SensorEventListener {
         public void onLocationChanged(Location location) {
             longitude = location.getLongitude();
             latitude = location.getLatitude();
-
-            Logger.d(longitude.toString());
-            Logger.d(latitude.toString());
         }
 
         @Override
@@ -366,7 +372,7 @@ public class DBService extends Service implements SensorEventListener {
                     }
                 }
             });
-            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_TIME_INTERVAL, 0, locationListener);
+            lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_TIME_INTERVAL, 0, gpsLocationListener);
         } catch (SecurityException e) {
             Logger.e(e.getMessage());
         }
@@ -375,7 +381,8 @@ public class DBService extends Service implements SensorEventListener {
     private LocationListener gpsLocationListener = new LocationListener() {
         @Override
         public void onLocationChanged(Location location) {
-
+            longitude = location.getLongitude();
+            latitude = location.getLatitude();
         }
 
         @Override
@@ -395,53 +402,15 @@ public class DBService extends Service implements SensorEventListener {
     };
 
     /*
+    数据库操作
+     */
+    private void insertState(State state) {
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
+        cupboard().withDatabase(db).put(state);
+    }
+
+    /*
     暂时不支持数据库
      */
-	 public void doJob(){
-         new Thread(){  
-        	 public void run(){  
-        			 try{
-        				 Thread.sleep(span);  
-        			 	}	  
-                      	catch(Exception e){  
-                      		e.printStackTrace();  
-                      	}  
-                       	Intent intent = new Intent();
-                        intent.setAction(".MainActivity");  
-                        Log.v("here","query information");
-                        StateInformation si = getNewestStateInformation();
-                        if (si!=null) {
-                            Log.v("id",si.getId()+"");
-	                        intent.putExtra("density", si.getPm25());
-	                        intent.putExtra("outdoor", si.getOutdoor());
-	                        intent.putExtra("status", si.getStatus());
-	                        sendBroadcast(intent);
-                        } else {
-                        	Log.v("state","state is null");
-                        }
-                        addStates();
-        		 }                                  
-         }.start();
-	 } 
-	 
-	 private StateInformation getNewestStateInformation() {
-		 int size = db.findAllStateInfomation().size();
-		 Log.v("total size",size+"");
-		 StateInformation si = db.selectLastStateInformation();		 
-		 return si;
-	 }
-	 
-	 private void addStates() {
-		String values[] = new String[11];
-		Calendar instance = Calendar.getInstance();
-		int id = instance.get(Calendar.MINUTE)*60+instance.get(Calendar.SECOND);
-		for (int i=0;i<11;i++) {
-			values[i] = id+"test";
-		}
-		Log.v("id",id+"");
-		StateInformation si = new StateInformation(id,values[0],values[1],values[2],values[3],values[4],
-				values[5],values[6],values[7],values[8],values[9],values[10]);
-		db.insertStateInfomation(si);
-	}
-	 
+
 }

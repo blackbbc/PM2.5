@@ -13,6 +13,7 @@ import me.sweetll.pm25demo.model.StateInformation;
 
 public class DBAccess {
 	private DBUtil dbUtil;
+	private DBHelper dbHelper;
 	private SQLiteDatabase db;
 	
 	private static String[] colNames = new String[]{
@@ -31,7 +32,6 @@ public class DBAccess {
 	};
 	
 	public DBAccess(Context context) {
-		Log.i("here", "DBAccess constructor");
 		dbUtil = new DBUtil(context);
 	}
 	
