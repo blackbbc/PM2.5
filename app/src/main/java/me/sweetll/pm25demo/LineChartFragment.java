@@ -147,7 +147,7 @@ public class LineChartFragment extends Fragment {
 
             //数据库查询
             State state = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).get();
-            Float val = Float.parseFloat(state.getPm25());
+            Float val = Float.parseFloat(state.getVentilation_volume());
 
 //            float mult = (range + 1);
 //            float val = (float) (10 * i + Math.random() * 10);

@@ -150,7 +150,7 @@ public class BarChartFragment extends Fragment {
             List<State> states = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).list();
             State firstState = states.get(0);
             State lastState = states.get(states.size() - 1);
-            Float val = Float.parseFloat(lastState.getPm25()) - Float.parseFloat(firstState.getPm25());
+            Float val = Float.parseFloat(lastState.getVentilation_volume()) - Float.parseFloat(firstState.getVentilation_volume());
 
 //            float mult = (range + 1);
 //            float val = (float) (Math.random() * mult);
