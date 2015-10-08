@@ -1,5 +1,6 @@
 package me.sweetll.pm25demo;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
@@ -18,10 +19,16 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import me.sweetll.pm25demo.model.State;
+import me.sweetll.pm25demo.util.DBHelper;
 import me.sweetll.pm25demo.util.YUnitFormatter;
+
+import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 /**
  * Created by sweet on 15-9-3.
@@ -33,6 +40,9 @@ public class LineChartFragment extends Fragment {
 
     private int mChartType;
     private Typeface mTf;
+
+    DBHelper dbHelper;
+    SQLiteDatabase db;
 
     protected String[] mMonths = new String[] {
             "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
@@ -50,6 +60,8 @@ public class LineChartFragment extends Fragment {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mChartType = getArguments().getInt(ARG_CHART, 1);
+        dbHelper = new DBHelper(getContext());
+        db = dbHelper.getReadableDatabase();
     }
 
     // Inflate the view for the fragment based on layout XML
@@ -123,8 +135,22 @@ public class LineChartFragment extends Fragment {
         ArrayList<Entry> vals1 = new ArrayList<Entry>();
 
         for (int i = 0; i < count; i++) {
-            float mult = (range + 1);
-            float val = (float) (10 * i + Math.random() * 10);
+            Calendar calendar = Calendar.getInstance();
+            int year = calendar.get(Calendar.YEAR);
+            int month = calendar.get(Calendar.MONTH);
+            int day = calendar.get(Calendar.DAY_OF_MONTH);
+            calendar.set(year, month, day, 2*i, 0, 0);
+
+            Long nowTime = calendar.getTime().getTime();
+            calendar.set(year, month, day, 2*(i+1), 0, 0);
+            Long nextTime = calendar.getTime().getTime();
+
+            //数据库查询
+            State state = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).get();
+            Float val = Float.parseFloat(state.getPm25());
+
+//            float mult = (range + 1);
+//            float val = (float) (10 * i + Math.random() * 10);
             vals1.add(new Entry(val, i));
         }
 

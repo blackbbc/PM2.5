@@ -2,7 +2,6 @@ package me.sweetll.pm25demo.service;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.Calendar;
 import java.util.Iterator;
 
 import android.app.PendingIntent;
@@ -26,7 +25,6 @@ import android.os.HandlerThread;
 import android.os.IBinder;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
-import android.util.Log;
 import android.widget.Toast;
 
 import com.android.volley.Request;
@@ -36,7 +34,6 @@ import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.orhanobut.logger.Logger;
 
-import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -45,10 +42,8 @@ import me.sweetll.pm25demo.MainActivity;
 import me.sweetll.pm25demo.R;
 import me.sweetll.pm25demo.constants.ConstantValues;
 import me.sweetll.pm25demo.model.State;
-import me.sweetll.pm25demo.model.StateInformation;
 import me.sweetll.pm25demo.movement.SimpleStepDetector;
 import me.sweetll.pm25demo.movement.StepListener;
-import me.sweetll.pm25demo.util.DBAccess;
 import me.sweetll.pm25demo.util.DBHelper;
 import me.sweetll.pm25demo.util.VolleyQueue;
 
