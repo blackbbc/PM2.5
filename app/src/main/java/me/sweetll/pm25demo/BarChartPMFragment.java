@@ -31,7 +31,7 @@ import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 /**
  * Created by sweet on 15-9-3.
  */
-public class BarChartFragment extends Fragment {
+public class BarChartPMFragment extends Fragment {
     private static final String ARG_CHART = "chart_type";
 
     @Bind(R.id.chart_bar) BarChart mChart;
@@ -46,8 +46,8 @@ public class BarChartFragment extends Fragment {
             "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
     };
 
-    public static BarChartFragment newInstance(int chartType) {
-        BarChartFragment fragment = new BarChartFragment();
+    public static BarChartPMFragment newInstance(int chartType) {
+        BarChartPMFragment fragment = new BarChartPMFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_CHART, chartType);
         fragment.setArguments(args);
@@ -108,7 +108,7 @@ public class BarChartFragment extends Fragment {
         leftAxis.setLabelCount(8, false);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         leftAxis.setSpaceTop(15f);
-        leftAxis.setValueFormatter(new YUnitFormatter("L"));
+        leftAxis.setValueFormatter(new YUnitFormatter("ug"));
 
         YAxis rightAxis = mChart.getAxisRight();
         rightAxis.setTypeface(mTf);
@@ -150,14 +150,14 @@ public class BarChartFragment extends Fragment {
             List<State> states = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).list();
             State firstState = states.get(0);
             State lastState = states.get(states.size() - 1);
-            Float val = Float.parseFloat(lastState.getVentilation_volume()) - Float.parseFloat(firstState.getVentilation_volume());
+            Float val = Float.parseFloat(lastState.getPm25()) - Float.parseFloat(firstState.getPm25());
 
 //            float mult = (range + 1);
 //            float val = (float) (Math.random() * mult);
             yVals1.add(new BarEntry(val, i));
         }
 
-        BarDataSet set1 = new BarDataSet(yVals1, "单位时间吸入的空气量");
+        BarDataSet set1 = new BarDataSet(yVals1, "单位时间吸入的PM2.5量");
         set1.setBarSpacePercent(35f);
 
         ArrayList<BarDataSet> dataSets = new ArrayList<BarDataSet>();

@@ -20,7 +20,6 @@ import com.github.mikephil.charting.utils.ColorTemplate;
 
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.List;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
@@ -33,7 +32,7 @@ import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 /**
  * Created by sweet on 15-9-3.
  */
-public class LineChartFragment extends Fragment {
+public class LineChartPMFragment extends Fragment {
     private static final String ARG_CHART = "chart_type";
 
     @Bind(R.id.chart_line) LineChart mChart;
@@ -48,8 +47,8 @@ public class LineChartFragment extends Fragment {
             "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
     };
 
-    public static LineChartFragment newInstance(int chartType) {
-        LineChartFragment fragment = new LineChartFragment();
+    public static LineChartPMFragment newInstance(int chartType) {
+        LineChartPMFragment fragment = new LineChartPMFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_CHART, chartType);
         fragment.setArguments(args);
@@ -106,7 +105,7 @@ public class LineChartFragment extends Fragment {
         leftAxis.setLabelCount(8, false);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         leftAxis.setSpaceTop(15f);
-        leftAxis.setValueFormatter(new YUnitFormatter("L"));
+        leftAxis.setValueFormatter(new YUnitFormatter("ug"));
 
         mChart.getAxisRight().setEnabled(false);
 
@@ -147,7 +146,7 @@ public class LineChartFragment extends Fragment {
 
             //数据库查询
             State state = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).get();
-            Float val = Float.parseFloat(state.getVentilation_volume());
+            Float val = Float.parseFloat(state.getPm25());
 
 //            float mult = (range + 1);
 //            float val = (float) (10 * i + Math.random() * 10);
@@ -155,7 +154,7 @@ public class LineChartFragment extends Fragment {
         }
 
         // create a dataset and give it a type
-        LineDataSet set1 = new LineDataSet(vals1, "累计吸入的空气量");
+        LineDataSet set1 = new LineDataSet(vals1, "累计吸入的PM2.5量");
         set1.setDrawCubic(true);
         set1.setCubicIntensity(0.2f);
         //set1.setDrawFilled(true);
