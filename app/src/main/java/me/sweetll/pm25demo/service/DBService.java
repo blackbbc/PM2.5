@@ -86,7 +86,7 @@ public class DBService extends Service implements SensorEventListener {
     private Double latitude = null;
     private Double longitude = null;
     private Double mDensity = null;
-    private final static int DENSITY_TIME_INTERVAL = 1*5*1000; //5秒钟
+    private final static int DENSITY_TIME_INTERVAL = 60*60*1000; //1个小时
     String mPosition = null;
     Handler DenHandler = new Handler();
     Runnable DenRunnable = new Runnable() {
@@ -96,6 +96,11 @@ public class DBService extends Service implements SensorEventListener {
                 sendPositionRequest();
                 if (mPosition != null)
                     sendPollutionRequest();
+                else {
+                    DenHandler.postDelayed(DenRunnable, 5000);
+                }
+            } else {
+                DenHandler.postDelayed(DenRunnable, 5000);
             }
             DenHandler.postDelayed(DenRunnable, DENSITY_TIME_INTERVAL);
         }
@@ -103,12 +108,12 @@ public class DBService extends Service implements SensorEventListener {
 
     //Location
     private LocationManager lm;
-    private static final int LOC_TIME_INTERVAL = 1000;
+    private static final int LOC_TIME_INTERVAL = 5000;
 
     //GPS
     GpsStatus mGpsStatus;
     public static Boolean mInDoor = null;
-    private final static int GPS_TIME_INTERVAL = 1000;
+    private final static int GPS_TIME_INTERVAL = 5000;
 
 
 	@Override
@@ -134,6 +139,8 @@ public class DBService extends Service implements SensorEventListener {
 
     @Override
     public void onDestroy() {
+        DBHandler.removeCallbacks(DBRunnable);
+        DenHandler.removeCallbacks(DBRunnable);
     }
 
 	private void initDB() {
@@ -164,8 +171,9 @@ public class DBService extends Service implements SensorEventListener {
             return;
 
         Double breath = 0.0;
+        Double density = mDensity;
         if (mInDoor) {
-            mDensity /= 3;
+            density /= 3;
         }
         if (mMotionStatus == MotionStatus.STATIC) {
             breath = ConstantValues.static_breath;
@@ -175,11 +183,13 @@ public class DBService extends Service implements SensorEventListener {
             breath = ConstantValues.run_breath;
         }
 
-        PM25 += mDensity*breath;
+        PM25 += density*breath;
 
-//        State state = new State("0", Long.valueOf(System.currentTimeMillis()), longitude.toString(), latitude.toString(),
-//                mInDoor.toString(), mMotionStatus.name(), Integer.valueOf(numSteps), );
-//        insertState(state);
+        Toast.makeText(getApplicationContext(), Double.toString(PM25), Toast.LENGTH_SHORT).show();
+
+        State state = new State("0", Long.toString(System.currentTimeMillis()), longitude.toString(), latitude.toString(),
+                mInDoor.toString(), mMotionStatus.name(), Integer.toString(numSteps), "", Double.toString(breath), PM25.toString(), "");
+        insertState(state);
 
         Intent intent = new Intent(ACTION);
         intent.putExtra("pm2_5", PM25);
