@@ -21,6 +21,7 @@ import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import me.sweetll.pm25demo.util.YUnitFormatter;
 
 /**
  * Created by sweet on 15-9-3.
@@ -34,7 +35,7 @@ public class LineChartFragment extends Fragment {
     private Typeface mTf;
 
     protected String[] mMonths = new String[] {
-            "2", "4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24"
+            "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
     };
 
     public static LineChartFragment newInstance(int chartType) {
@@ -93,6 +94,7 @@ public class LineChartFragment extends Fragment {
         leftAxis.setLabelCount(8, false);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         leftAxis.setSpaceTop(15f);
+        leftAxis.setValueFormatter(new YUnitFormatter("L"));
 
         mChart.getAxisRight().setEnabled(false);
 
@@ -127,7 +129,7 @@ public class LineChartFragment extends Fragment {
         }
 
         // create a dataset and give it a type
-        LineDataSet set1 = new LineDataSet(vals1, "累计PM2.5吸入量");
+        LineDataSet set1 = new LineDataSet(vals1, "累计吸入的空气量");
         set1.setDrawCubic(true);
         set1.setCubicIntensity(0.2f);
         //set1.setDrawFilled(true);

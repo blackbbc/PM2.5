@@ -14,12 +14,12 @@ import com.github.mikephil.charting.components.YAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
-import com.github.mikephil.charting.utils.ValueFormatter;
 
 import java.util.ArrayList;
 
 import butterknife.Bind;
 import butterknife.ButterKnife;
+import me.sweetll.pm25demo.util.YUnitFormatter;
 
 /**
  * Created by sweet on 15-9-3.
@@ -33,7 +33,7 @@ public class BarChartFragment extends Fragment {
     private Typeface mTf;
 
     protected String[] mMonths = new String[] {
-            "2", "4", "6", "8", "10", "12", "14", "16", "18", "20", "22", "24"
+            "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
     };
 
     public static BarChartFragment newInstance(int chartType) {
@@ -90,12 +90,12 @@ public class BarChartFragment extends Fragment {
         xAxis.setDrawGridLines(false);
         xAxis.setSpaceBetweenLabels(2);
 
-
         YAxis leftAxis = mChart.getAxisLeft();
         leftAxis.setTypeface(mTf);
         leftAxis.setLabelCount(8, false);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         leftAxis.setSpaceTop(15f);
+        leftAxis.setValueFormatter(new YUnitFormatter("L"));
 
         YAxis rightAxis = mChart.getAxisRight();
         rightAxis.setTypeface(mTf);
@@ -128,7 +128,7 @@ public class BarChartFragment extends Fragment {
             yVals1.add(new BarEntry(val, i));
         }
 
-        BarDataSet set1 = new BarDataSet(yVals1, "每小时PM2.5吸入量");
+        BarDataSet set1 = new BarDataSet(yVals1, "单位时间吸入的空气量");
         set1.setBarSpacePercent(35f);
 
         ArrayList<BarDataSet> dataSets = new ArrayList<BarDataSet>();
