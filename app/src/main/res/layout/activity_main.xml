@@ -48,7 +48,7 @@
                         android:textAppearance="?android:attr/textAppearanceLarge"
                         android:textColor="@android:color/white"
                         android:textSize="48sp"
-                        android:text="150微克"
+                        android:text="0微克"
                         android:layout_centerVertical="true"
                         android:layout_centerHorizontal="true" />
 
@@ -58,7 +58,7 @@
                         android:layout_height="wrap_content"
                         android:textAppearance="?android:attr/textAppearanceSmall"
                         android:textColor="@android:color/white"
-                        android:text="约等于2支烟"
+                        android:text="约等于0支烟"
                         android:layout_marginTop="160dp"
                         android:layout_centerHorizontal="true"/>
                 </RelativeLayout>

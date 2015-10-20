@@ -2,7 +2,9 @@ package me.sweetll.pm25demo.service;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.util.Calendar;
 import java.util.Iterator;
+import java.util.List;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -53,10 +55,12 @@ public class DBService extends Service implements SensorEventListener {
     public static final String ACTION = "me.sweetll.pm25demo.service.DBService";
 
 	private DBHelper dbHelper;
+    private SQLiteDatabase db;
 
     //DB
     private static Double PM25 = 0.0;
-	private static final int DB_TIME_INTERVAL = 5*1000;//5秒钟
+    private static Double VENTILATION_VOLUME = 0.0;
+	private static final int DB_TIME_INTERVAL = 60*1000;//1分钟
     private Handler DBHandler = new Handler();
     private Runnable DBRunnable = new Runnable() {
         @Override
@@ -77,23 +81,16 @@ public class DBService extends Service implements SensorEventListener {
     }
 
     //Density
-    private String city;
     private Double latitude = null;
     private Double longitude = null;
     private Double mDensity = null;
     private final static int DENSITY_TIME_INTERVAL = 60*60*1000; //1个小时
-    String mPosition = null;
     Handler DenHandler = new Handler();
     Runnable DenRunnable = new Runnable() {
         @Override
         public void run() {
             if (latitude != null && longitude != null) {
-                sendPositionRequest();
-                if (mPosition != null)
-                    sendPollutionRequest();
-                else {
-                    DenHandler.postDelayed(DenRunnable, 5000);
-                }
+                sendDensityRequest();
             } else {
                 DenHandler.postDelayed(DenRunnable, 5000);
             }
@@ -103,12 +100,12 @@ public class DBService extends Service implements SensorEventListener {
 
     //Location
     private LocationManager lm;
-    private static final int LOC_TIME_INTERVAL = 5000;
+    private static final int LOC_TIME_INTERVAL = 60*1000;//1分钟
 
     //GPS
     GpsStatus mGpsStatus;
     public static Boolean mInDoor = null;
-    private final static int GPS_TIME_INTERVAL = 5000;
+    private final static int GPS_TIME_INTERVAL = 60*1000;//1分钟
 
 
 	@Override
@@ -123,7 +120,6 @@ public class DBService extends Service implements SensorEventListener {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        city = intent.getStringExtra("city");
         return START_STICKY;
     }
 
@@ -140,12 +136,38 @@ public class DBService extends Service implements SensorEventListener {
 
 	private void initDB() {
         dbHelper = new DBHelper(getApplicationContext());
+        db = dbHelper.getReadableDatabase();
 
         HandlerThread thread = new HandlerThread("DBService");
         thread.start();
 
         DBHandler = new Handler(thread.getLooper());
         DBHandler.post(DBRunnable);
+
+        Calendar calendar = Calendar.getInstance();
+        int year = calendar.get(Calendar.YEAR);
+        int month = calendar.get(Calendar.MONTH);
+        int day = calendar.get(Calendar.DAY_OF_MONTH);
+        calendar.set(year, month, day, 0, 0, 0);
+
+        Long nowTime = calendar.getTime().getTime();
+        calendar.set(year, month, day, 23, 59, 59);
+        Long nextTime = calendar.getTime().getTime();
+
+        List<State> states = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).list();
+        if (states.isEmpty()) {
+            PM25 = 0.0;
+            VENTILATION_VOLUME = 0.0;
+        } else {
+            State state = states.get(states.size() - 1);
+            PM25 = Double.parseDouble(state.getPm25());
+            VENTILATION_VOLUME = Double.parseDouble(state.getVentilation_volume());
+        }
+
+
+        Intent intent = new Intent(ACTION);
+        intent.putExtra("pm2_5", PM25);
+        LocalBroadcastManager.getInstance(this).sendBroadcast(intent);
 
 		Intent notificationIntent = new Intent(this, MainActivity.class);
 		PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, notificationIntent, 0);
@@ -178,12 +200,13 @@ public class DBService extends Service implements SensorEventListener {
             breath = ConstantValues.run_breath;
         }
 
+        VENTILATION_VOLUME += breath;
         PM25 += density*breath;
 
-        Toast.makeText(getApplicationContext(), Double.toString(PM25), Toast.LENGTH_SHORT).show();
+//        Toast.makeText(getApplicationContext(), Double.toString(PM25), Toast.LENGTH_SHORT).show();
 
         State state = new State("0", Long.toString(System.currentTimeMillis()), longitude.toString(), latitude.toString(),
-                mInDoor.toString(), mMotionStatus.name(), Integer.toString(numSteps), "", Double.toString(breath), PM25.toString(), "");
+                mInDoor.toString(), mMotionStatus.name(), Integer.toString(numSteps), "", VENTILATION_VOLUME.toString(), PM25.toString(), "");
         insertState(state);
 
         Intent intent = new Intent(ACTION);
@@ -233,75 +256,27 @@ public class DBService extends Service implements SensorEventListener {
         DenHandler.post(DenRunnable);
     }
 
-    public void sendPollutionRequest() {
-        try {
-            String url = ConstantValues.pollutionsURL + "?area=" + URLEncoder.encode(city, "utf-8");
+    public void sendDensityRequest() {
+        String url = String.format(ConstantValues.densityURL, latitude, longitude, System.currentTimeMillis() / 1000);
 
-            JsonArrayRequest jsonArrayRequest = new JsonArrayRequest(
-                    Request.Method.GET, url, new Response.Listener<JSONArray>() {
-                @Override
-                public void onResponse(JSONArray response) {
-                    try {
-                        for (int i = 0; i < response.length(); i++) {
-                            JSONObject pollution = response.getJSONObject(i);
-                            if (pollution.getString("position_name").equals(mPosition)) {
-                                mDensity = pollution.getDouble("pm2_5");
-                                break;
-                            }
-                        }
-                    } catch (JSONException e) {
-                        Logger.e(e.getMessage());
-                    }
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                try {
+                    mDensity = response.getDouble("PM25");
+                } catch (JSONException e) {
+                    Logger.e(e.getMessage());
                 }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Logger.e(error.getMessage());
-                }
-            });
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Logger.e(error.getMessage());
+                Toast.makeText(getApplicationContext(), "无法连接服务器", Toast.LENGTH_SHORT).show();
+            }
+        });
 
-            VolleyQueue.getInstance(getApplicationContext()).addToRequestQueue(jsonArrayRequest);
-
-        } catch (UnsupportedEncodingException e) {
-            Logger.e(e.getMessage());
-            Toast.makeText(getApplicationContext(), "无法连接服务器", Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    public void sendPositionRequest() {
-        try {
-            String url = ConstantValues.positionsURL + "?area=" + URLEncoder.encode(city, "utf8");
-
-            JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.GET, url, new Response.Listener<JSONObject>() {
-                @Override
-                public void onResponse(JSONObject response) {
-                    try {
-                        double minDistance = 10000000;
-                        JSONArray positions = response.getJSONArray("上海");
-                        for (int i = 0; i < positions.length(); i++) {
-                            JSONObject position = positions.getJSONObject(i);
-                            Double tmpDistance = Math.pow(longitude - position.getDouble("longtitude"), 2) + Math.pow(latitude - position.getDouble("latitude"), 2);
-                            if (tmpDistance < minDistance) {
-                                minDistance = tmpDistance;
-                                mPosition = position.getString("position_name");
-                            }
-                        }
-                    } catch (JSONException e) {
-                        Logger.e(e.getMessage());
-                    }
-                }
-            }, new Response.ErrorListener() {
-                @Override
-                public void onErrorResponse(VolleyError error) {
-                    Logger.e(error.getMessage());
-                    Toast.makeText(getApplicationContext(), "无法连接服务器", Toast.LENGTH_SHORT).show();
-                }
-            });
-
-            VolleyQueue.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
-        } catch (UnsupportedEncodingException e) {
-            Logger.e(e.getMessage());
-        }
+        VolleyQueue.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
     private void initLocation() {
@@ -379,6 +354,7 @@ public class DBService extends Service implements SensorEventListener {
             });
             lm.requestLocationUpdates(LocationManager.GPS_PROVIDER, GPS_TIME_INTERVAL, 0, gpsLocationListener);
         } catch (SecurityException e) {
+            Toast.makeText(this, "请打开GPS", Toast.LENGTH_SHORT).show();
             Logger.e(e.getMessage());
         }
     }

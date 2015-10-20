@@ -11,6 +11,8 @@ import android.graphics.Color;
 
 import android.net.Uri;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.support.v4.widget.DrawerLayout;
@@ -56,6 +58,9 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
     Tencent mTencent;
 
+    private static Double PM25 = null;
+
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -88,6 +93,12 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     @Override
     public void onResume() {
         super.onResume();
+        if (PM25 != null) {
+            arcView.addEvent(new DecoEvent.Builder(PM25.intValue())
+                    .setIndex(series1Index)
+                    .setDelay(3250)
+                    .build());
+        }
         IntentFilter filter = new IntentFilter(DBService.ACTION);
         LocalBroadcastManager.getInstance(this).registerReceiver(pm25Receiver, filter);
     }
@@ -102,10 +113,11 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         @Override
         public void onReceive(Context context, Intent intent) {
             Double mPm2_5 = intent.getDoubleExtra("pm2_5", 0);
+            PM25 = mPm2_5;
             arcView.addEvent(new DecoEvent.Builder(mPm2_5.intValue())
+                    .setDelay(3250)
                     .setIndex(series1Index)
                     .build());
-            pm_num_view.setText(String.valueOf(mPm2_5.intValue()));
         }
     };
 
@@ -121,14 +133,14 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
     private void initArcView() {
         // Create background track
         SeriesItem seriesItem = new SeriesItem.Builder(Color.argb(255, 218, 218, 218))
-                .setRange(0, 1000, 0)
+                .setRange(0, 5000, 0)
                 .setInitialVisibility(true)
                 .setLineWidth(24f)
                 .build();
 
         //Create data series track
         SeriesItem seriesItem1 = new SeriesItem.Builder(Color.argb(255, 64, 196, 0))
-                .setRange(0, 1000, 0)
+                .setRange(0, 5000, 0)
                 .setInitialVisibility(false)
                 .setLineWidth(24f)
                 .build();
@@ -137,7 +149,7 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
             @Override
             public void onSeriesItemAnimationProgress(float v, float v1) {
                 pm_num_view.setText("" + (int)v1 + "微克");
-                healthy_view.setText("约等于" + (int)(v1 / 12) + "支烟");
+                healthy_view.setText("约等于" + (int)(v1 / 90) + "支烟");
             }
 
             @Override
@@ -149,7 +161,7 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
         seriesIndex = arcView.addSeries(seriesItem);
         series1Index = arcView.addSeries(seriesItem1);
 
-        arcView.addEvent(new DecoEvent.Builder(1000)
+        arcView.addEvent(new DecoEvent.Builder(5000)
                 .setIndex(seriesIndex)
                 .setDuration(3000)
                 .setDelay(100)
@@ -165,7 +177,6 @@ public class MainActivity extends AppCompatActivity implements GooeyMenu.GooeyMe
 
     protected void initDBService() {
         Intent DBIntent = new Intent(this, DBService.class);
-        DBIntent.putExtra("city", "上海");
         startService(DBIntent);
     }
 

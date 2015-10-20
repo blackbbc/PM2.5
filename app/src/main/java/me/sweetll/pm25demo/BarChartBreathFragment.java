@@ -3,6 +3,8 @@ package me.sweetll.pm25demo;
 import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -46,6 +48,15 @@ public class BarChartBreathFragment extends Fragment {
             "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
     };
 
+    Handler chartHandler;
+    Runnable chartRunnable = new Runnable() {
+        @Override
+        public void run() {
+            initChart();
+            chartHandler.postDelayed(chartRunnable, 60*1000);
+        }
+    };
+
     public static BarChartBreathFragment newInstance(int chartType) {
         BarChartBreathFragment fragment = new BarChartBreathFragment();
         Bundle args = new Bundle();
@@ -69,7 +80,12 @@ public class BarChartBreathFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_bar_chart, container, false);
         ButterKnife.bind(this, view);
-        initChart();
+
+        HandlerThread thread = new HandlerThread("bar_breath");
+        thread.start();
+        chartHandler = new Handler(thread.getLooper());
+        chartHandler.post(chartRunnable);
+
         return view;
     }
 
@@ -124,7 +140,12 @@ public class BarChartBreathFragment extends Fragment {
         setData(12, 50);
 
         // dont forget to refresh the drawing
-        mChart.invalidate();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mChart.invalidate();
+            }
+        });
     }
 
     private void setData(int count, float range) {
@@ -147,13 +168,18 @@ public class BarChartBreathFragment extends Fragment {
             Long nextTime = calendar.getTime().getTime();
 
             //数据库查询
+            Float val;
             List<State> states = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).list();
-            State firstState = states.get(0);
-            State lastState = states.get(states.size() - 1);
-            Float val = Float.parseFloat(lastState.getVentilation_volume()) - Float.parseFloat(firstState.getVentilation_volume());
+            if (states.isEmpty()) {
+                val = 0.0f;
+            } else if (states.size() == 1) {
+                val = 0.0f;
+            } else {
+                State firstState = states.get(0);
+                State lastState = states.get(states.size() - 1);
+                val = Float.parseFloat(lastState.getVentilation_volume()) - Float.parseFloat(firstState.getVentilation_volume());
+            }
 
-//            float mult = (range + 1);
-//            float val = (float) (Math.random() * mult);
             yVals1.add(new BarEntry(val, i));
         }
 

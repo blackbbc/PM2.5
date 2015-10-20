@@ -4,6 +4,8 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -47,6 +49,16 @@ public class LineChartBreathFragment extends Fragment {
             "2点", "4点", "6点", "8点", "10点", "12点", "14点", "16点", "18点", "20点", "22点", "24点"
     };
 
+    Handler chartHandler;
+    Runnable chartRunnable = new Runnable() {
+        @Override
+        public void run() {
+            initChart();
+            chartHandler.postDelayed(chartRunnable, 60*1000);
+        }
+    };
+
+
     public static LineChartBreathFragment newInstance(int chartType) {
         LineChartBreathFragment fragment = new LineChartBreathFragment();
         Bundle args = new Bundle();
@@ -69,7 +81,12 @@ public class LineChartBreathFragment extends Fragment {
                              Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_line_chart, container, false);
         ButterKnife.bind(this, view);
-        initChart();
+
+        HandlerThread thread = new HandlerThread("line_breath");
+        thread.start();
+        chartHandler = new Handler(thread.getLooper());
+        chartHandler.post(chartRunnable);
+
         return view;
     }
 
@@ -120,7 +137,12 @@ public class LineChartBreathFragment extends Fragment {
         setData(12, 150);
 
         // dont forget to refresh the drawing
-        mChart.invalidate();
+        getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                mChart.invalidate();
+            }
+        });
     }
 
 
@@ -145,11 +167,14 @@ public class LineChartBreathFragment extends Fragment {
             Long nextTime = calendar.getTime().getTime();
 
             //数据库查询
+            Float val;
             State state = cupboard().withDatabase(db).query(State.class).withSelection("time_point > ? AND time_point < ?", nowTime.toString(), nextTime.toString()).get();
-            Float val = Float.parseFloat(state.getVentilation_volume());
+            if (state == null) {
+                val = 0.0f;
+            } else {
+                val = Float.parseFloat(state.getVentilation_volume());
+            }
 
-//            float mult = (range + 1);
-//            float val = (float) (10 * i + Math.random() * 10);
             vals1.add(new Entry(val, i));
         }
 
