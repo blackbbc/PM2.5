@@ -27,6 +27,8 @@ public class State {
 	private String avg_rate;
 	@Column(DBConstants.DB_MetaData.STATE_VENTILATION_VOLUME_COL)
 	private String ventilation_volume;
+	@Column(DBConstants.DB_MetaData.STATE_DENSITY_COL)
+	private String density;
 	@Column(DBConstants.DB_MetaData.STATE_PM25_COL)
 	private String pm25;
 	@Column(DBConstants.DB_MetaData.STATE_SOURCE_COL)
@@ -36,7 +38,7 @@ public class State {
 
 	}
 
-	public State(String userid, String time_point, String longtitude, String latitude, String outdoor, String status, String steps, String avg_rate, String ventilation_volume, String pm25, String source) {
+	public State(String userid, String time_point, String longtitude, String latitude, String outdoor, String status, String steps, String avg_rate, String ventilation_volume, String density, String pm25, String source) {
 		this.userid = userid;
 		this.time_point = time_point;
 		this.longtitude = longtitude;
@@ -46,6 +48,7 @@ public class State {
 		this.steps = steps;
 		this.avg_rate = avg_rate;
 		this.ventilation_volume = ventilation_volume;
+        this.density = density;
 		this.pm25 = pm25;
 		this.source = source;
 	}
@@ -122,7 +125,15 @@ public class State {
 		this.ventilation_volume = ventilation_volume;
 	}
 
-	public String getPm25() {
+    public String getDensity() {
+        return density;
+    }
+
+    public void setDensity(String density) {
+        this.density = density;
+    }
+
+    public String getPm25() {
 		return pm25;
 	}
 

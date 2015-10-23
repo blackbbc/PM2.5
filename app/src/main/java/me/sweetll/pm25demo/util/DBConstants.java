@@ -18,6 +18,7 @@ public class DBConstants {
 		public static final String STATE_STEPS_COL = "steps";
 		public static final String STATE_AVG_RATE_COL = "avg_rate";
 		public static final String STATE_VENTILATION_VOLUME_COL = "ventilation_volume";
+		public static final String STATE_DENSITY_COL = "density";
 		public static final String STATE_PM25_COL = "pm25";
 		public static final String STATE_SOURCE_COL = "source";	
 		public static final String DEFAULT_ORDER = "_id desc";

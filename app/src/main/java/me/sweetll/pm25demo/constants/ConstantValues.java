@@ -10,5 +10,6 @@ public class ConstantValues {
 	public static final double run_breath = 6 * static_breath;
 	
 	public static final String densityURL = "http://urbanair.msra.cn/U_Air/SearchGeoPoint?Latitude=%f&Longitude=%f&Standard=0&time=%d&Culture=zh-CN";
+	public static final String uploadURL = "http://ilab.tongji.edu.cn/pm25/web/restful/mobile-data/create";
 
 }

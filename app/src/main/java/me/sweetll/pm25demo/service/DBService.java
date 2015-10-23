@@ -3,8 +3,10 @@ package me.sweetll.pm25demo.service;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -29,6 +31,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.LocalBroadcastManager;
 import android.widget.Toast;
 
+import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
 import com.android.volley.Response;
 import com.android.volley.VolleyError;
@@ -61,6 +64,7 @@ public class DBService extends Service implements SensorEventListener {
     private static Double PM25 = 0.0;
     private static Double VENTILATION_VOLUME = 0.0;
 	private static final int DB_TIME_INTERVAL = 60*1000;//1分钟
+//    private static final int DB_TIME_INTERVAL = 5000;//5秒钟
     private Handler DBHandler = new Handler();
     private Runnable DBRunnable = new Runnable() {
         @Override
@@ -203,11 +207,10 @@ public class DBService extends Service implements SensorEventListener {
         VENTILATION_VOLUME += breath;
         PM25 += density*breath;
 
-//        Toast.makeText(getApplicationContext(), Double.toString(PM25), Toast.LENGTH_SHORT).show();
-
         State state = new State("0", Long.toString(System.currentTimeMillis()), longitude.toString(), latitude.toString(),
-                mInDoor.toString(), mMotionStatus.name(), Integer.toString(numSteps), "", VENTILATION_VOLUME.toString(), PM25.toString(), "");
+                mInDoor.toString(), mMotionStatus.name(), Integer.toString(numSteps), "", VENTILATION_VOLUME.toString(), density.toString(), PM25.toString(), "");
         insertState(state);
+        upload(state);
 
         Intent intent = new Intent(ACTION);
         intent.putExtra("pm2_5", PM25);
@@ -273,6 +276,60 @@ public class DBService extends Service implements SensorEventListener {
             public void onErrorResponse(VolleyError error) {
                 Logger.e(error.getMessage());
                 Toast.makeText(getApplicationContext(), "无法连接服务器", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        VolleyQueue.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
+    }
+
+    public void upload(final State state) {
+        String url = ConstantValues.uploadURL;
+        JSONObject jsonRequestBody;
+
+        /*
+        {
+            'userid' : "1", //[int unsigned]用户id，非用户名，此字段和user表的id有外键约束，目前user表仅有id为1的一个用户，所以测试时userid请设置为1
+                'time_point' :"2015-08-20 12:00:00",
+                'longitude' : "123.567891", //[float 6位小数]
+                'latitude' : "123.567891", //[float 6位小数]
+                'outdoor' : "1", //[整数]是否在室外
+                'status' : "1", //[整数]运动状态，1=walk 2=running 3=biking 。。。？
+                'steps' : "12", //[整数]步数
+                'avg_rate': "12", //[float 2位小数]平均心率
+                'ventilation_volume' : "12", //[float 2位小数]通气量
+                'pm25': "12", //[float 2位小数]pm25浓度
+                'source': "2" //[整数]数据来源， 1=station 2=device。。？
+        }
+        */
+
+        try {
+            jsonRequestBody = new JSONObject("{" +
+                    "\"userid\":" + "\"1\"," +
+                    "\"time_point\":" + "\"" + state.getTime_point() +"\"," +
+                    "\"longitude\":" + "\"" + state.getLongtitude() + "\"," +
+                    "\"latitude\":" + "\"" + state.getLatitude() + "\"," +
+                    "\"outdoor\":" + "\"" + state.getOutdoor() + "\"," +
+                    "\"status\":" + "\"" + state.getStatus() + "\"," +
+                    "\"steps\":" + "\"" + state.getSteps() + "\"," +
+                    "\"avg_rate\":" + "\"12\"," +
+                    "\"ventilation_volume\":" + "\"" + state.getVentilation_volume() + "\"," +
+                    "\"pm25\":" + "\"" + state.getDensity() + "\"," +
+                    "\"source\":" + "\"1\"" +
+                    "}");
+        } catch (JSONException e) {
+            Logger.e(e.getMessage());
+            return;
+        }
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonRequestBody,  new Response.Listener<JSONObject>() {
+            @Override
+            public void onResponse(JSONObject response) {
+                Logger.d("Upload Success");
+            }
+        }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Logger.d("Upload Failed");
             }
         });
 

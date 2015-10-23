@@ -8,7 +8,7 @@ import android.support.v4.app.FragmentPagerAdapter;
  * Created by sweet on 15-9-3.
  */
 public class ChartPagerAdapter extends FragmentPagerAdapter {
-    private int pagerCount = 4;
+    private int pagerCount = 5;
 
     public ChartPagerAdapter(FragmentManager fm) {
         super(fm);
@@ -24,6 +24,8 @@ public class ChartPagerAdapter extends FragmentPagerAdapter {
                 return BarChartPMFragment.newInstance(i);
             case 3:
                 return LineChartPMFragment.newInstance(i);
+            case 4:
+                return LineChartDensityFragment.newInstance(i);
             default:
                 return null;
         }

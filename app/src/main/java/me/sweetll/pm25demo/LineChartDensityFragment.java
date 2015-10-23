@@ -34,7 +34,7 @@ import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 /**
  * Created by sweet on 15-9-3.
  */
-public class LineChartPMFragment extends Fragment {
+public class LineChartDensityFragment extends Fragment {
     private static final String ARG_CHART = "chart_type";
 
     @Bind(R.id.chart_line) LineChart mChart;
@@ -59,8 +59,8 @@ public class LineChartPMFragment extends Fragment {
     };
 
 
-    public static LineChartPMFragment newInstance(int chartType) {
-        LineChartPMFragment fragment = new LineChartPMFragment();
+    public static LineChartDensityFragment newInstance(int chartType) {
+        LineChartDensityFragment fragment = new LineChartDensityFragment();
         Bundle args = new Bundle();
         args.putInt(ARG_CHART, chartType);
         fragment.setArguments(args);
@@ -122,7 +122,7 @@ public class LineChartPMFragment extends Fragment {
         leftAxis.setLabelCount(8, false);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         leftAxis.setSpaceTop(15f);
-        leftAxis.setValueFormatter(new YUnitFormatter("μg"));
+        leftAxis.setValueFormatter(new YUnitFormatter("μg/ｍ³"));
 
         mChart.getAxisRight().setEnabled(false);
 
@@ -172,14 +172,14 @@ public class LineChartPMFragment extends Fragment {
             if (state == null) {
                 val = 0.0f;
             } else {
-                val = Float.parseFloat(state.getPm25());
+                val = Float.parseFloat(state.getDensity());
             }
 
             vals1.add(new Entry(val, i));
         }
 
         // create a dataset and give it a type
-        LineDataSet set1 = new LineDataSet(vals1, "累计吸入的PM2.5量");
+        LineDataSet set1 = new LineDataSet(vals1, "单位时间PM2.5浓度");
         set1.setDrawCubic(true);
         set1.setCubicIntensity(0.2f);
         //set1.setDrawFilled(true);

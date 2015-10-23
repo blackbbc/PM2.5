@@ -125,7 +125,7 @@ public class BarChartPMFragment extends Fragment {
         leftAxis.setLabelCount(8, false);
         leftAxis.setPosition(YAxis.YAxisLabelPosition.OUTSIDE_CHART);
         leftAxis.setSpaceTop(15f);
-        leftAxis.setValueFormatter(new YUnitFormatter("ug"));
+        leftAxis.setValueFormatter(new YUnitFormatter("μg"));
 
         YAxis rightAxis = mChart.getAxisRight();
         rightAxis.setTypeface(mTf);
