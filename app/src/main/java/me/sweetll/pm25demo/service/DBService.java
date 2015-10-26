@@ -1,12 +1,16 @@
 package me.sweetll.pm25demo.service;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.TimeZone;
 
 import android.app.PendingIntent;
 import android.app.Service;
@@ -37,6 +41,7 @@ import com.android.volley.Response;
 import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonArrayRequest;
 import com.android.volley.toolbox.JsonObjectRequest;
+import com.android.volley.toolbox.StringRequest;
 import com.orhanobut.logger.Logger;
 
 import org.json.JSONArray;
@@ -208,7 +213,9 @@ public class DBService extends Service implements SensorEventListener {
         PM25 += density*breath;
 
         State state = new State("0", Long.toString(System.currentTimeMillis()), longitude.toString(), latitude.toString(),
-                mInDoor.toString(), mMotionStatus.name(), Integer.toString(numSteps), "", VENTILATION_VOLUME.toString(), density.toString(), PM25.toString(), "");
+                mInDoor? "1":"0",
+                mMotionStatus == MotionStatus.STATIC? "1" : mMotionStatus == MotionStatus.WALK? "2" : "3",
+                Integer.toString(numSteps), "12", VENTILATION_VOLUME.toString(), density.toString(), PM25.toString(), "1");
         insertState(state);
         upload(state);
 
@@ -282,7 +289,7 @@ public class DBService extends Service implements SensorEventListener {
         VolleyQueue.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
 
-    public void upload(final State state) {
+    public void upload(final State state)  {
         String url = ConstantValues.uploadURL;
         JSONObject jsonRequestBody;
 
@@ -302,26 +309,48 @@ public class DBService extends Service implements SensorEventListener {
         }
         */
 
-        try {
-            jsonRequestBody = new JSONObject("{" +
-                    "\"userid\":" + "\"1\"," +
-                    "\"time_point\":" + "\"" + state.getTime_point() +"\"," +
-                    "\"longitude\":" + "\"" + state.getLongtitude() + "\"," +
-                    "\"latitude\":" + "\"" + state.getLatitude() + "\"," +
-                    "\"outdoor\":" + "\"" + state.getOutdoor() + "\"," +
-                    "\"status\":" + "\"" + state.getStatus() + "\"," +
-                    "\"steps\":" + "\"" + state.getSteps() + "\"," +
-                    "\"avg_rate\":" + "\"12\"," +
-                    "\"ventilation_volume\":" + "\"" + state.getVentilation_volume() + "\"," +
-                    "\"pm25\":" + "\"" + state.getDensity() + "\"," +
-                    "\"source\":" + "\"1\"" +
-                    "}");
-        } catch (JSONException e) {
-            Logger.e(e.getMessage());
-            return;
-        }
+        Map<String, String> params = new HashMap<String, String>();
+        params.put("userid", "1");
 
-        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, jsonRequestBody,  new Response.Listener<JSONObject>() {
+        Long unixSeconds = Long.parseLong(state.getTime_point());
+        Date date = new Date(unixSeconds); // *1000 is to convert seconds to milliseconds
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss"); // the format of your date
+        sdf.setTimeZone(TimeZone.getTimeZone("GMT+8")); // give a timezone reference for formating (see comment at the bottom
+        String formattedDate = sdf.format(date);
+        params.put("time_point", formattedDate);
+
+        params.put("longitude", state.getLongtitude());
+        params.put("latitude", state.getLatitude());
+        params.put("outdoor", state.getOutdoor());
+        params.put("status", state.getStatus());
+        params.put("steps", state.getSteps());
+        params.put("avg_rate", state.getAvg_rate());
+        params.put("ventilation_volume", state.getVentilation_volume());
+        params.put("pm25", state.getDensity());
+        params.put("source", "2");
+
+
+//        try {
+//            jsonRequestBody = new JSONObject("{" +
+//                    "\"userid\":" + "\"1\"," +
+//                    "\"time_point\":" + "\"" + state.getTime_point() +"\"," +
+//                    "\"longitude\":" + "\"" + state.getLongtitude() + "\"," +
+//                    "\"latitude\":" + "\"" + state.getLatitude() + "\"," +
+//                    "\"outdoor\":" + "\"" + state.getOutdoor() + "\"," +
+//                    "\"status\":" + "\"" + state.getStatus() + "\"," +
+//                    "\"steps\":" + "\"" + state.getSteps() + "\"," +
+//                    "\"avg_rate\":" + "\"12\"," +
+//                    "\"ventilation_volume\":" + "\"" + state.getVentilation_volume() + "\"," +
+//                    "\"pm25\":" + "\"" + state.getDensity() + "\"," +
+//                    "\"source\":" + "\"1\"" +
+//                    "}");
+//        } catch (JSONException e) {
+//            Logger.e(e.getMessage());
+//            return;
+//        }
+
+
+        JsonObjectRequest jsonObjectRequest = new JsonObjectRequest(Request.Method.POST, url, new JSONObject(params),  new Response.Listener<JSONObject>() {
             @Override
             public void onResponse(JSONObject response) {
                 Logger.d("Upload Success");
@@ -331,7 +360,14 @@ public class DBService extends Service implements SensorEventListener {
             public void onErrorResponse(VolleyError error) {
                 Logger.d("Upload Failed");
             }
-        });
+        }){
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                HashMap<String, String> headers = new HashMap<String, String>();
+                headers.put("Content-Type", "application/json; charset=UTF-8");
+                return headers;
+            }
+        };
 
         VolleyQueue.getInstance(getApplicationContext()).addToRequestQueue(jsonObjectRequest);
     }
